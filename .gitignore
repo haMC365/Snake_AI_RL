@@ -2,7 +2,5 @@
 __pycache__/
 *.pyc
 .ruff_cache/
-data/
 *.pkl
-data/
 *.csv
