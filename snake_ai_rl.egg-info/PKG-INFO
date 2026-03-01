@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: snake-ai-rl
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: msgpack>=1.1.2
+Requires-Dist: pygame>=2.6.1
+Requires-Dist: setuptools<70.0.0
+Requires-Dist: tensorboard>=2.20.0
+Requires-Dist: tensorboardx>=2.6.4
+Dynamic: license-file
+
+# Snake_AI_RL
