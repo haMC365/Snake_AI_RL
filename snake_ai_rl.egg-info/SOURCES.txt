@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+snake_ai/__init__.py
+snake_ai/agents/__init__.py
+snake_ai/agents/rl/__init__.py
+snake_ai/agents/rl/encoders.py
+snake_ai/agents/rl/trainer.py
+snake_ai/core/__init__.py
+snake_ai/engine/__init__.py
+snake_ai/engine/game.py
+snake_ai_rl.egg-info/PKG-INFO
+snake_ai_rl.egg-info/SOURCES.txt
+snake_ai_rl.egg-info/dependency_links.txt
+snake_ai_rl.egg-info/requires.txt
+snake_ai_rl.egg-info/top_level.txt

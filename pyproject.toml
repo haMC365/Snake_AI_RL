@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "msgpack>=1.1.2",
+    "pygame>=2.6.1",
     "setuptools<70.0.0",
     "tensorboard>=2.20.0",
     "tensorboardx>=2.6.4",
@@ -17,3 +18,11 @@ dev = [
     "pre-commit>=4.5.1",
     "ruff>=0.15.4",
 ]
+
+[build-system]
+requires=["setuptools>=61.0"]
+build-backend="setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where=["."]
+include=["snake_ai*"]
