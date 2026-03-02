@@ -1,5 +1,6 @@
 from typing import Tuple
 from snake_ai.engine.game import Direction, Point, SnakeGameAI
+from snake_ai.config.settings import settings
 
 
 class StateEncoder:
@@ -12,10 +13,10 @@ class StateEncoder:
         head = game.head
 
         # Points adjacents à la tête pour détecter les dangers
-        point_l = Point(head.x - 20, head.y)
-        point_r = Point(head.x + 20, head.y)
-        point_u = Point(head.x, head.y - 20)
-        point_d = Point(head.x, head.y + 20)
+        point_l = Point(head.x - settings.block_size, head.y)
+        point_r = Point(head.x + settings.block_size, head.y)
+        point_u = Point(head.x, head.y - settings.block_size)
+        point_d = Point(head.x, head.y + settings.block_size)
 
         # Direction actuelle (One-hot encoding)
         dir_l = game.direction == Direction.LEFT

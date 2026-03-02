@@ -3,6 +3,9 @@ import random
 from enum import Enum
 from typing import NamedTuple
 
+# On importe l'instance settings
+from snake_ai.config.settings import settings
+
 
 # Configuration simple pour les coordonnées
 class Point(NamedTuple):
@@ -17,8 +20,8 @@ class Direction(Enum):
     DOWN = 4
 
 
-BLOCK_SIZE = 20
-SPEED = 40  # Vitesse pour l'IA (on pourra l'augmenter plus tard)
+# --- LES VARIABLES GLOBALES ONT ÉTÉ SUPPRIMÉES ICI ---
+# Elles sont remplacées par settings.block_size et settings.speed
 
 
 class SnakeGameAI:
@@ -37,8 +40,8 @@ class SnakeGameAI:
         self.head = Point(self.w / 2, self.h / 2)
         self.snake = [
             self.head,
-            Point(self.head.x - BLOCK_SIZE, self.head.y),
-            Point(self.head.x - (2 * BLOCK_SIZE), self.head.y),
+            Point(self.head.x - settings.block_size, self.head.y),
+            Point(self.head.x - (2 * settings.block_size), self.head.y),
         ]
         self.score = 0
         self.food = None
@@ -46,8 +49,15 @@ class SnakeGameAI:
         self.frame_iteration = 0
 
     def _place_food(self):
-        x = random.randint(0, (self.w - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
-        y = random.randint(0, (self.h - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
+        # Utilisation de settings.block_size pour la grille
+        x = (
+            random.randint(0, (self.w - settings.block_size) // settings.block_size)
+            * settings.block_size
+        )
+        y = (
+            random.randint(0, (self.h - settings.block_size) // settings.block_size)
+            * settings.block_size
+        )
         self.food = Point(x, y)
         if self.food in self.snake:
             self._place_food()
@@ -80,9 +90,9 @@ class SnakeGameAI:
         else:
             self.snake.pop()
 
-        # 5. Update UI et horloge
+        # 5. Update UI et horloge (Utilisation de settings.speed)
         self._update_ui()
-        self.clock.tick(SPEED)
+        self.clock.tick(settings.speed)
 
         # 6. Retourner le résultat du step
         return reward, game_over, self.score
@@ -90,11 +100,11 @@ class SnakeGameAI:
     def is_collision(self, pt=None):
         if pt is None:
             pt = self.head
-        # Touche les bords
+        # Touche les bords (Utilisation de settings.block_size)
         if (
-            pt.x > self.w - BLOCK_SIZE
+            pt.x > self.w - settings.block_size
             or pt.x < 0
-            or pt.y > self.h - BLOCK_SIZE
+            or pt.y > self.h - settings.block_size
             or pt.y < 0
         ):
             return True
@@ -109,12 +119,14 @@ class SnakeGameAI:
             pygame.draw.rect(
                 self.display,
                 (0, 255, 0),
-                pygame.Rect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE),
+                pygame.Rect(pt.x, pt.y, settings.block_size, settings.block_size),
             )
         pygame.draw.rect(
             self.display,
             (255, 0, 0),
-            pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE),
+            pygame.Rect(
+                self.food.x, self.food.y, settings.block_size, settings.block_size
+            ),
         )
         pygame.display.flip()
 
@@ -136,11 +148,11 @@ class SnakeGameAI:
 
         x, y = self.head.x, self.head.y
         if self.direction == Direction.RIGHT:
-            x += BLOCK_SIZE
+            x += settings.block_size
         elif self.direction == Direction.LEFT:
-            x -= BLOCK_SIZE
+            x -= settings.block_size
         elif self.direction == Direction.DOWN:
-            y += BLOCK_SIZE
+            y += settings.block_size
         elif self.direction == Direction.UP:
-            y -= BLOCK_SIZE
+            y -= settings.block_size
         self.head = Point(x, y)
