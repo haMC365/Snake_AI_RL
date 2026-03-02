@@ -1,0 +1,44 @@
+name: CI Logic
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-path: "uv.lock"
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      run: uv sync --all-extras --dev
+
+    - name: Lint with Ruff
+      run: uv run ruff check .
+
+    - name: Run A* Unit Tests
+      run: uv run pytest tests/test_astar.py
+
+    - name: RL Smoke Test (10 Episodes)
+      run: |
+        # On simule un affichage pour pygame (headless mode)
+        export SDL_VIDEODRIVER=dummy
+        uv run scripts/check_encoder.py
+        # Ici on lancera plus tard : uv run python train.py --episodes 10
+        
+    - name: RL Encoder Smoke Test
+      run: |
+        export SDL_VIDEODRIVER=dummy
+        PYTHONPATH=. uv run scripts/check_encoder.py
