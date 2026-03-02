@@ -14,3 +14,4 @@ snake_ai_rl.egg-info/SOURCES.txt
 snake_ai_rl.egg-info/dependency_links.txt
 snake_ai_rl.egg-info/requires.txt
 snake_ai_rl.egg-info/top_level.txt
+tests/test_astar.py

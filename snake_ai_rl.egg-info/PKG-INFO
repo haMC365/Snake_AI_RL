@@ -6,6 +6,7 @@ Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: msgpack>=1.1.2
+Requires-Dist: pydantic-settings>=2.13.1
 Requires-Dist: pygame>=2.6.1
 Requires-Dist: setuptools<70.0.0
 Requires-Dist: tensorboard>=2.20.0
