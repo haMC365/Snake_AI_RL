@@ -43,9 +43,9 @@ def test_collision_wall():
     assert state.is_collision((10, 0)) is True, "Collision mur droit non détectée"
     assert state.is_collision((0, -1)) is True, "Collision mur haut non détectée"
     assert state.is_collision((0, 10)) is True, "Collision mur bas non détectée"
-    assert (
-        state.is_collision((5, 5)) is False
-    ), "Position valide détectée comme collision"
+    assert state.is_collision((5, 5)) is False, (
+        "Position valide détectée comme collision"
+    )
 
 
 def test_collision_body():
@@ -63,9 +63,9 @@ def test_collision_body():
 
     # La tête est en (5,5). On teste une collision sur le corps en (5,6)
     assert state.is_collision((5, 6)) is True, "Collision avec le corps non détectée"
-    assert (
-        state.is_collision((2, 2)) is False
-    ), "Position de la nourriture détectée comme collision"
+    assert state.is_collision((2, 2)) is False, (
+        "Position de la nourriture détectée comme collision"
+    )
 
 
 def test_head_utility():
