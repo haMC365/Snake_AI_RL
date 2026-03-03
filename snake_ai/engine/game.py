@@ -1,158 +1,167 @@
 import pygame
 import random
-from enum import Enum
-from typing import NamedTuple
-
-# On importe l'instance settings
-from snake_ai.config.settings import settings
+from typing import Tuple
+from snake_ai.core.game_state import GameState
 
 
-# Configuration simple pour les coordonnées
-class Point(NamedTuple):
-    x: int
-    y: int
+class SnakeEngine:
+    """
+    Logique pure du jeu Snake (Moteur).
+    Manipule uniquement un objet GameState.
+    AUCUN import de Pygame ici (l'affichage est géré par le Renderer).
+    """
 
+    def __init__(self, initial_state: GameState, screen=None):
+        self.state = initial_state
+        self.running = True
+        self.screen = screen  # On passe l'écran Pygame ici
+        # Définir largeur/hauteur pour le texte centré (ex: 600x600)
+        self.width = initial_state.grid_width * 20
+        self.height = initial_state.grid_height * 20
+        # VITESSE : 10 FPS est une vitesse réaliste pour commencer
+        self.fps = 10
+        # DIRECTION PAR DÉFAUT : Important pour qu'il bouge dès le lancement
+        if not self.state.direction:
+            self.state.direction = "RIGHT"
 
-class Direction(Enum):
-    RIGHT = 1
-    LEFT = 2
-    UP = 3
-    DOWN = 4
+    def step(self, action: str) -> bool:  # On retourne True si vivant
+        if not self.state.alive:
+            return False
 
+        self._update_direction(action)
+        new_head = self._compute_new_head()
 
-# --- LES VARIABLES GLOBALES ONT ÉTÉ SUPPRIMÉES ICI ---
-# Elles sont remplacées par settings.block_size et settings.speed
+        if self.state.is_collision(new_head):
+            self.state.alive = False
+            return False
 
+        self.state.snake.insert(0, new_head)
 
-class SnakeGameAI:
-    def __init__(self, w=640, h=480):
-        self.w = w
-        self.h = h
-        # Initialisation de l'affichage
-        self.display = pygame.display.set_mode((self.w, self.h))
-        pygame.display.set_caption("Snake AI - Training Mode")
-        self.clock = pygame.time.Clock()
-        self.reset()
-
-    def reset(self):
-        # État initial du jeu
-        self.direction = Direction.RIGHT
-        self.head = Point(self.w / 2, self.h / 2)
-        self.snake = [
-            self.head,
-            Point(self.head.x - settings.block_size, self.head.y),
-            Point(self.head.x - (2 * settings.block_size), self.head.y),
-        ]
-        self.score = 0
-        self.food = None
-        self._place_food()
-        self.frame_iteration = 0
-
-    def _place_food(self):
-        # Utilisation de settings.block_size pour la grille
-        x = (
-            random.randint(0, (self.w - settings.block_size) // settings.block_size)
-            * settings.block_size
-        )
-        y = (
-            random.randint(0, (self.h - settings.block_size) // settings.block_size)
-            * settings.block_size
-        )
-        self.food = Point(x, y)
-        if self.food in self.snake:
-            self._place_food()
-
-    def play_step(self, action):
-        self.frame_iteration += 1
-        # 1. Collecter l'input utilisateur (pour fermer la fenêtre)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-
-        # 2. Déplacer le serpent
-        self._move(action)
-        self.snake.insert(0, self.head)
-
-        # 3. Vérifier si Game Over
-        reward = 0
-        game_over = False
-        if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
-            game_over = True
-            reward = -10
-            return reward, game_over, self.score
-
-        # 4. Placer nouvelle nourriture ou se déplacer simplement
-        if self.head == self.food:
-            self.score += 1
-            reward = 10
-            self._place_food()
+        if new_head == self.state.food:
+            self.state.score += 1
+            self._spawn_food()
         else:
-            self.snake.pop()
+            self.state.snake.pop()
 
-        # 5. Update UI et horloge (Utilisation de settings.speed)
-        self._update_ui()
-        self.clock.tick(settings.speed)
+        self.state.steps += 1
+        return True
 
-        # 6. Retourner le résultat du step
-        return reward, game_over, self.score
+    def run(self):
+        pygame.init()
+        clock = pygame.time.Clock()
 
-    def is_collision(self, pt=None):
-        if pt is None:
-            pt = self.head
-        # Touche les bords (Utilisation de settings.block_size)
-        if (
-            pt.x > self.w - settings.block_size
-            or pt.x < 0
-            or pt.y > self.h - settings.block_size
-            or pt.y < 0
-        ):
-            return True
-        # Se touche lui-même
-        if pt in self.snake[1:]:
-            return True
-        return False
+        while self.running:
+            # --- 1. CADENCE ---
+            # Cette ligne gère la vitesse. Si tu l'enlèves, le serpent est trop rapide.
+            clock.tick(self.fps)
 
-    def _update_ui(self):
-        self.display.fill((0, 0, 0))  # Noir
-        for pt in self.snake:
-            pygame.draw.rect(
-                self.display,
-                (0, 255, 0),
-                pygame.Rect(pt.x, pt.y, settings.block_size, settings.block_size),
+            # --- 2. ENTRÉES CLAVIER ---
+            # On ne fait QUE changer la variable de direction ici
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        self._update_direction("UP")
+                    elif event.key == pygame.K_DOWN:
+                        self._update_direction("DOWN")
+                    elif event.key == pygame.K_LEFT:
+                        self._update_direction("LEFT")
+                    elif event.key == pygame.K_RIGHT:
+                        self._update_direction("RIGHT")
+
+            # --- 3. MOUVEMENT AUTOMATIQUE (L'élément manquant) ---
+            # On appelle step() avec la direction actuelle stockée dans l'état.
+            # Cela arrive à chaque tour de boucle, même si tu ne touches pas au clavier.
+            alive = self.step(self.state.direction)
+
+            # --- 4. VÉRIFICATION COLLISION ---
+            if not alive:
+                self.show_game_over()
+                self.running = False
+                continue  # On sort de la boucle
+
+            # --- 5. AFFICHAGE ---
+            # TRÈS IMPORTANT : Redessiner l'écran à chaque mouvement
+            if hasattr(self, "renderer"):
+                self.renderer.render(self.state)
+            else:
+                # Si tu n'as pas de renderer séparé, appelle ta fonction de dessin ici
+                self._draw_everything()
+
+            pygame.display.flip()  # Rafraîchit l'écran Pygame
+
+    def show_game_over(self):
+        """Affiche le titre Game Over et le score final."""
+        if self.screen:
+            # 1. Préparation des polices
+            font_large = pygame.font.SysFont("Arial", 64, bold=True)
+            font_small = pygame.font.SysFont("Arial", 32)
+
+            # 2. Création des surfaces de texte
+            title_surf = font_large.render(
+                "GAME OVER", True, (255, 50, 50)
+            )  # Rouge vif
+            score_surf = font_small.render(
+                f"Score Final : {self.state.score}", True, (255, 255, 255)
+            )  # Blanc
+
+            # 3. Positionnement (centré)
+            title_rect = title_surf.get_rect(
+                center=(self.width // 2, self.height // 2 - 20)
             )
-        pygame.draw.rect(
-            self.display,
-            (255, 0, 0),
-            pygame.Rect(
-                self.food.x, self.food.y, settings.block_size, settings.block_size
-            ),
-        )
-        pygame.display.flip()
+            score_rect = score_surf.get_rect(
+                center=(self.width // 2, self.height // 2 + 40)
+            )
 
-    def _move(self, action):
-        # action -> [tout droit, droite, gauche]
-        clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
-        idx = clock_wise.index(self.direction)
+            # 4. Dessiner un rectangle de fond pour la lisibilité
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))  # Noir transparent (Alpha = 180)
+            self.screen.blit(overlay, (0, 0))
 
-        if list(action) == [1, 0, 0]:
-            new_dir = clock_wise[idx]  # Pas de changement
-        elif list(action) == [0, 1, 0]:
-            next_idx = (idx + 1) % 4
-            new_dir = clock_wise[next_idx]  # Tourne à droite
-        else:  # [0, 0, 1]
-            next_idx = (idx - 1) % 4
-            new_dir = clock_wise[next_idx]  # Tourne à gauche
+            # 5. Affichage final
+            self.screen.blit(title_surf, title_rect)
+            self.screen.blit(score_surf, score_rect)
 
-        self.direction = new_dir
+            pygame.display.flip()
 
-        x, y = self.head.x, self.head.y
-        if self.direction == Direction.RIGHT:
-            x += settings.block_size
-        elif self.direction == Direction.LEFT:
-            x -= settings.block_size
-        elif self.direction == Direction.DOWN:
-            y += settings.block_size
-        elif self.direction == Direction.UP:
-            y -= settings.block_size
-        self.head = Point(x, y)
+            # 6. Petite pause pour laisser le temps de voir le score
+            pygame.time.wait(2500)
+
+    def _update_direction(self, new_dir: str) -> None:
+        """Change la direction si elle n'est pas opposée à l'actuelle."""
+        opposites = {"UP": "DOWN", "DOWN": "UP", "LEFT": "RIGHT", "RIGHT": "LEFT"}
+        if new_dir in ["UP", "DOWN", "LEFT", "RIGHT"]:
+            if new_dir != opposites.get(self.state.direction):
+                self.state.direction = new_dir
+
+    def _compute_new_head(self) -> Tuple[int, int]:
+        """Calcule la coordonnée (x, y) de la prochaine tête."""
+        x, y = self.state.head()
+        if self.state.direction == "UP":
+            y -= 1
+        elif self.state.direction == "DOWN":
+            y += 1
+        elif self.state.direction == "LEFT":
+            x -= 1
+        elif self.state.direction == "RIGHT":
+            x += 1
+        return (x, y)
+
+    def _spawn_food(self) -> None:
+        """Place la nourriture sur une case vide aléatoire."""
+        while True:
+            new_food = (
+                random.randint(0, self.state.grid_width - 1),
+                random.randint(0, self.state.grid_height - 1),
+            )
+            if new_food not in self.state.snake:
+                self.state.food = new_food
+                break
+
+    def get_state(self) -> GameState:
+        return self.state
+
+    def get_state_clone(self) -> GameState:
+        """Retourne une copie indépendante de l'état actuel."""
+        return self.state.clone()

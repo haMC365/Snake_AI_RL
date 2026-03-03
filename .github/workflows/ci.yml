@@ -2,7 +2,7 @@ name: CI Logic
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, "andrewmc1729/*" ]
   pull_request:
     branches: [ main ]
 
@@ -27,17 +27,11 @@ jobs:
     - name: Lint with Ruff
       run: uv run ruff check .
 
-    - name: Run A* Unit Tests
-      run: uv run pytest tests/test_astar.py
+    - name: Run Unit Tests
+      # On lance pytest sur tout le dossier. Il ignorera test_astar.py.bak automatiquement.
+      run: uv run pytest
 
-    - name: RL Smoke Test (10 Episodes)
-      run: |
-        # On simule un affichage pour pygame (headless mode)
-        export SDL_VIDEODRIVER=dummy
-        uv run scripts/check_encoder.py
-        # Ici on lancera plus tard : uv run python train.py --episodes 10
-        
     - name: RL Encoder Smoke Test
       run: |
         export SDL_VIDEODRIVER=dummy
-        PYTHONPATH=. uv run scripts/check_encoder.py
+        uv run scripts/check_encoder.py

@@ -5,19 +5,15 @@ from copy import deepcopy
 
 @dataclass
 class GameState:
-    """
-    Représentation pure et sérialisable de l'état du jeu Snake.
-    Indépendante de toute logique d'affichage ou de bibliothèque tierce.
-    """
-
     snake: List[Tuple[int, int]]
     direction: str
     food: Tuple[int, int]
-    score: int
-    steps: int
-    alive: bool
     grid_width: int
     grid_height: int
+    # Valeurs par défaut pour simplifier l'instanciation
+    score: int = 0
+    steps: int = 0
+    alive: bool = True
 
     def clone(self) -> "GameState":
         """
