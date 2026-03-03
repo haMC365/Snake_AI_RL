@@ -5,9 +5,17 @@ from snake_ai.engine.game import SnakeEngine
 
 def test_continuous_movement_logic():
     # Setup : Serpent en (5,5), direction RIGHT
-    state = GameState(grid_width=10, grid_height=10)
-    state.snake = [(5, 5), (4, 5)]
-    state.direction = "RIGHT"
+    # Setup correct avec tous les arguments requis
+    state = GameState(
+        snake=[(5, 5), (4, 5)],
+        direction="RIGHT",
+        food=(7, 5),
+        score=0,
+        steps=0,
+        alive=True,
+        grid_width=10,
+        grid_height=10,
+    )
     engine = SnakeEngine(state)
 
     # Exécuter un pas sans changer la direction
@@ -21,9 +29,17 @@ def test_continuous_movement_logic():
 
 def test_game_over_detection():
     # Setup : Serpent contre le mur gauche, direction LEFT
-    state = GameState(grid_width=10, grid_height=10)
-    state.snake = [(0, 5)]
-    state.direction = "LEFT"
+    # Setup : Serpent au bord, prêt à sortir
+    state = GameState(
+        snake=[(0, 5)],
+        direction="LEFT",
+        food=(7, 5),
+        score=0,
+        steps=0,
+        alive=True,
+        grid_width=10,
+        grid_height=10,
+    )
     engine = SnakeEngine(state)
 
     # Exécuter le pas fatal
