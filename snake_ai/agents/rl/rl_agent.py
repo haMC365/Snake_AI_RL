@@ -1,7 +1,7 @@
 import numpy as np
 import msgpack
 import os
-from typing import Dict, Tuple
+from typing import Dict
 from snake_ai.core.game_state import GameState
 from snake_ai.agents.rl.encoders import StateEncoder
 

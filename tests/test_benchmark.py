@@ -1,4 +1,3 @@
-import pytest
 from benchmarks.run_duel_benchmark import run_single_duel, create_initial_state
 from snake_ai.agents.astar.astar_agent import AStarAgent
 from snake_ai.agents.rl.rl_agent import RLAgent
