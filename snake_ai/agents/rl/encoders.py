@@ -1,67 +1,73 @@
 from typing import Tuple
-
-# from snake_ai.engine.game import Direction, Point, SnakeGameAI
 from snake_ai.core.game_state import GameState
 
 
 class StateEncoder:
     """
-    Transforme l'état complexe du SnakeGameAI en un tuple de 11 booléens (0 ou 1).
-    Espace d'état : 2^11 = 2048 combinaisons possibles.
+    Transforme l'état en 11 bits.
+    Optimisé pour que l'IA comprenne le danger RELATIF (Devant, Droite, Gauche).
     """
 
-    # def encode(self, game: SnakeGameAI) -> Tuple[int, ...]:
     def encode(self, state: GameState) -> Tuple[int, ...]:
         head = state.head()
+        food = state.food
 
-        # Calcul des points adjacents (Haut, Bas, Gauche, Droite)
-        point_l = (head[0] - 1, head[1])
-        point_r = (head[0] + 1, head[1])
-        point_u = (head[0], head[1] - 1)
-        point_d = (head[0], head[1] + 1)
+        # 1. Définir les points adjacents
+        p_left = (head[0] - 1, head[1])
+        p_right = (head[0] + 1, head[1])
+        p_up = (head[0], head[1] - 1)
+        p_down = (head[0], head[1] + 1)
 
-        # Points adjacents à la tête pour détecter les dangers
-        # point_l = Point(head.x - settings.block_size, head.y)
-        # point_r = Point(head.x + settings.block_size, head.y)
-        # point_u = Point(head.x, head.y - settings.block_size)
-        # point_d = Point(head.x, head.y + settings.block_size)
+        # 2. Directions actuelles
+        d_l = state.direction == "LEFT"
+        d_r = state.direction == "RIGHT"
+        d_u = state.direction == "UP"
+        d_d = state.direction == "DOWN"
 
-        # Vérification des directions actuelles
-        dir_l = state.direction == "LEFT"
-        dir_r = state.direction == "RIGHT"
-        dir_u = state.direction == "UP"
-        dir_d = state.direction == "DOWN"
-
-        # Direction actuelle (One-hot encoding)
-        # dir_l = game.direction == Direction.LEFT
-        # dir_r = game.direction == Direction.RIGHT
-        # dir_u = game.direction == Direction.UP
-        # dir_d = game.direction == Direction.DOWN
+        # 3. Calcul du 12ème bit : La pomme est-elle adjacente ?
+        # (Distance de Manhattan == 1)
+        is_food_adjacent = (abs(head[0] - food[0]) + abs(head[1] - food[1])) == 1
 
         state_vector = [
-            # 1. Danger immédiat (Tout droit, Droite, Gauche)
-            (dir_r and state.is_collision(point_r))
-            or (dir_l and state.is_collision(point_l))
-            or (dir_u and state.is_collision(point_u))
-            or (dir_d and state.is_collision(point_d)),
-            (dir_u and state.is_collision(point_r))
-            or (dir_d and state.is_collision(point_l))
-            or (dir_l and state.is_collision(point_u))
-            or (dir_r and state.is_collision(point_d)),
-            (dir_d and state.is_collision(point_r))
-            or (dir_u and state.is_collision(point_l))
-            or (dir_r and state.is_collision(point_u))
-            or (dir_l and state.is_collision(point_d)),
-            # 2. Mouvement actuel
-            dir_l,
-            dir_r,
-            dir_u,
-            dir_d,
-            # 3. Position de la nourriture (Gauche, Droite, Haut, Bas)
-            state.food[0] < head[0],  # food left
-            state.food[0] > head[0],  # food right
-            state.food[1] < head[1],  # food up
-            state.food[1] > head[1],  # food down
+            # --- 1. DANGER IMMÉDIAT (Relatif à la direction actuelle) ---
+            # Danger devant
+            (d_r and self._is_unsafe(p_right, state))
+            or (d_l and self._is_unsafe(p_left, state))
+            or (d_u and self._is_unsafe(p_up, state))
+            or (d_d and self._is_unsafe(p_down, state)),
+            # Danger à droite
+            (d_u and self._is_unsafe(p_right, state))
+            or (d_d and self._is_unsafe(p_left, state))
+            or (d_l and self._is_unsafe(p_up, state))
+            or (d_r and self._is_unsafe(p_down, state)),
+            # Danger à gauche
+            (d_d and self._is_unsafe(p_right, state))
+            or (d_u and self._is_unsafe(p_left, state))
+            or (d_r and self._is_unsafe(p_up, state))
+            or (d_l and self._is_unsafe(p_down, state)),
+            # --- 2. DIRECTION ACTUELLE (One-hot) ---
+            d_l,
+            d_r,
+            d_u,
+            d_d,
+            # --- 3. POSITION NOURRITURE ---
+            state.food[0] < head[0],  # Food Left
+            state.food[0] > head[0],  # Food Right
+            state.food[1] < head[1],  # Food Up
+            state.food[1] > head[1],  # Food Down
+            # --- Le 12ème BIT : proximité promme ---
+            is_food_adjacent,
         ]
 
         return tuple(int(x) for x in state_vector)
+
+    def _is_unsafe(self, pt: Tuple[int, int], state: GameState) -> bool:
+        """Détection stricte: Murs + Tout le corps"""
+        x, y = pt
+        # Mur
+        if x < 0 or x >= state.grid_width or y < 0 or y >= state.grid_height:
+            return True
+        # Corps (on ignore le dernier segment de la queue car il va bouger)
+        if pt in state.snake:
+            return True
+        return False
