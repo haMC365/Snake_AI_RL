@@ -1,4 +1,3 @@
-# from snake_ai.engine.game import SnakeGameAI
 from snake_ai.core.game_state import GameState
 from snake_ai.agents.rl.encoders import StateEncoder
 

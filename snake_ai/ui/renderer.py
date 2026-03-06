@@ -14,10 +14,28 @@ class SnakeRenderer:
         self.width = width
         self.height = height
         self.display = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Snake AI - Tournament")
+        pygame.display.set_caption("Snake AI - Tournament & Analytics")
         self.clock = pygame.time.Clock()
+
+        # Polices optimisées
         self.font = pygame.font.SysFont("arial", 20, bold=True)
-        self.small_font = pygame.font.SysFont("arial", 16)
+        self.small_font = pygame.font.SysFont("consolas", 14)
+        self.title_font = pygame.font.SysFont("arial", 16)
+
+    def draw_metrics(self, screen, metrics, x, y, color=(200, 200, 200)):
+        """Affiche le bloc de metrics pour l'agent donné."""
+        # On multiplie par 1000 pour afficher en millisecondes (ms)
+        lines = [
+            f"Score: {metrics.get('score', 0)}",
+            f"Steps: {metrics.get('steps', 0)}",
+            f"Avg Latency: {metrics.get('avg_latency', 0)*1000:.2f} ms",
+            f"Max Latency: {metrics.get('max_latency', 0)*1000:.2f} ms",
+            f"Runtime: {metrics.get('runtime', 0):.1f}",
+        ]
+
+        for i, text in enumerate(lines):
+            surface = self.small_font.render(text, True, color)
+            screen.blit(surface, (x, y + i * 20))
 
     def _draw_grid_content(self, state: GameState, offset_x: int, offset_y: int):
         """Méthode interne pour dessiner le contenu d'une grille à une position donnée."""
@@ -66,31 +84,44 @@ class SnakeRenderer:
         self.display.blit(text, [20, 10])
         pygame.display.flip()
 
-    def render_duel(self, state_a: GameState, state_rl: GameState):
-        """Affichage split-screen (Mode Duel)."""
+    def render_duel(self, state_a: GameState, state_rl: GameState, metrics: dict):
+        """Affichage split-screen (Mode Duel) avec metriques en temps réel"""
         self.display.fill((20, 20, 20))  # Fond sombre
 
         block = settings.block_size
         grid_pixel_w = state_a.grid_width * block
+        y_grid = 50
+        y_metrics = (
+            y_grid + grid_pixel_w + 20
+        )  # Positionner les metriques sous la grille
 
-        # 1. Dessiner la partie A* (Gauche)
-        self._draw_grid_content(state_a, 20, 40)
-        label_a = self.font.render("AGENT A* (Recherche)", True, (0, 200, 255))
-        score_a = self.small_font.render(
-            f"Score: {state_a.score} | Pas: {state_a.steps}", True, (200, 200, 200)
-        )
-        self.display.blit(label_a, [20, 10])
-        self.display.blit(score_a, [20, grid_pixel_w + 45])
+        # 1. Dessiner la partie Agents A* (Gauche)
+        x_a = 20
+        self._draw_grid_content(state_a, x_a, y_grid)
+        label_a = self.font.render("Agent A* (Recherche)", True, (0, 200, 255))
+        self.display.blit(label_a, [x_a, 15])
 
-        # 2. Dessiner la partie RL (Droite)
-        offset_rl = grid_pixel_w + 40
-        self._draw_grid_content(state_rl, offset_rl, 40)
-        label_rl = self.font.render("AGENT RL (Cerveau)", True, (255, 165, 0))
-        score_rl = self.small_font.render(
-            f"Score: {state_rl.score} | Pas: {state_rl.steps}", True, (200, 200, 200)
-        )
-        self.display.blit(label_rl, [offset_rl, 10])
-        self.display.blit(score_rl, [offset_rl, grid_pixel_w + 45])
+        # Affichage des metriques A*
+        if "astar" in metrics:
+            self.draw_metrics(
+                self.display, metrics["astar"], x_a, y_metrics, color=(0, 200, 255)
+            )
+        # score_a = self.small_font.render(
+        #     f"Score: {state_a.score} | Pas: {state_a.steps}", True, (200, 200, 200)
+        # )
+        # self.display.blit(label_a, [20, 10])
+        # self.display.blit(score_a, [20, grid_pixel_w + 45])
+
+        # 2. Dessiner l'agent RL (Droite)
+        x_rl = grid_pixel_w + 60  # un peu plus d'espace entre les deux
+        self._draw_grid_content(state_rl, x_rl, y_grid)
+        label_rl = self.font.render("AGENT RL (Q-Table)", True, (255, 165, 0))
+        self.display.blit(label_rl, [x_rl, 15])
+
+        if "rl" in metrics:
+            self.draw_metrics(
+                self.display, metrics["rl"], x_rl, y_metrics, color=(255, 165, 0)
+            )
 
         pygame.display.flip()
 
