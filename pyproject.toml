@@ -31,6 +31,6 @@ build-backend="setuptools.build_meta"
 where=["."]
 include=["snake_ai*"]
 
-[tool.pytest.init_options]
+[tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
