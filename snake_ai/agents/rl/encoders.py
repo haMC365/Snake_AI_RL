@@ -18,7 +18,7 @@ class StateEncoder:
 
         # 2. Points de vue (Radar)
         # On regarde à 1 case (Danger immédiat) et 2 cases (Danger proche)
-        p_f1 = self._get_relative_point(head, state.direction, 1)  # Devant 1
+        # p_f1 = self._get_relative_point(head, state.direction, 1)  # Devant 1
         p_f2 = self._get_relative_point(head, state.direction, 2)  # Devant 2
 
         state_vector = [

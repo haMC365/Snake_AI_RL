@@ -1,6 +1,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
-import numpy as np
+
+# import numpy as np
 
 
 class DuelManager:
