@@ -1,3 +1,4 @@
+import copy
 from snake_ai.core.game_state import GameState
 from snake_ai.engine.game import SnakeEngine
 from snake_ai.simulation.mode_manager import ModeManager, GameMode
@@ -26,14 +27,14 @@ def test_mode_switch():
     rl_agent = RLAgent()  # Utilise la Q-Table par defaut ou une table vide
 
     duel_manager = DuelManager(
-        engine_star=engine_astar,
+        engine_astar=engine_astar,
         engine_rl=engine_rl,
         astar_agent=astar_agent,
         rl_agent=rl_agent,
     )
 
-    engine_manual = SnakeGame(state)
-    mode_manager = ModeManager(engine, duel_manager)
+    engine_manual = SnakeEngine(state)
+    mode_manager = ModeManager(engine_manual, duel_manager)
 
     # 3. Test de transition
     mode_manager.start_duel()
@@ -41,7 +42,7 @@ def test_mode_switch():
 
 
 def test_duel_states_independent():
-    initial = GameState(
+    state = GameState(
         snake=[(5, 5)],
         direction="RIGHT",
         food=(10, 10),
@@ -51,12 +52,24 @@ def test_duel_states_independent():
         grid_width=20,
         grid_height=20,
     )
-    dm = DuelManager()
-    dm.start(initial)
 
-    # On modifie artificiellement l'état A*
+    # CRUCIAL : On utilise deepcopy pour créer deux instances distinctes en mémoire
+    state_astar = copy.deepcopy(state)
+    state_rl = copy.deepcopy(state)
+
+    dm = DuelManager(
+        engine_astar=SnakeEngine(state_astar),
+        engine_rl=SnakeEngine(state_rl),
+        astar_agent=AStarAgent(),
+        rl_agent=RLAgent(),
+    )
+
+    # On modifie uniquement le serpent A*
     dm.state_astar.snake.append((99, 99))
 
-    # L'état RL ne doit pas avoir reçu cette modification
+    # Maintenant, l'assertion va passer car state_rl a sa propre liste snake
     assert (99, 99) not in dm.state_rl.snake
-    assert len(dm.state_astar.snake) != len(dm.state_rl.snake)
+    assert len(dm.state_astar.snake) == 2
+    assert len(dm.state_rl.snake) == 1
+
+    dm.shutdown()

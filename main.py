@@ -128,6 +128,12 @@ def main():
                 # 2. Récupération des métriques
                 metrics = duel_manager.get_metrics()
 
+                # Mettre en oeuvre les graphiques TOUTES les frames (ou toutes les 10 frames pour economiser le CPU)
+                if metrics["astar"]["steps"] % 5 == 0:  # Toutes les 5 étapes
+                    charts.update_data(
+                        metrics["astar"]["steps"], metrics["astar"], metrics["rl"]
+                    )
+
                 # 3. Mise à jour des graphiques quand un serpent meurt (fin d'épisode)
                 if (
                     not duel_manager.state_astar.alive

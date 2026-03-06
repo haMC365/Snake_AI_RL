@@ -17,6 +17,7 @@ snake_ai/engine/__init__.py
 snake_ai/engine/game.py
 snake_ai/simulation/duel_manager.py
 snake_ai/simulation/mode_manager.py
+snake_ai/ui/charts.py
 snake_ai/ui/renderer.py
 snake_ai_rl.egg-info/PKG-INFO
 snake_ai_rl.egg-info/SOURCES.txt

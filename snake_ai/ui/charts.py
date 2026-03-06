@@ -3,69 +3,66 @@ import matplotlib.pyplot as plt
 
 class LivePerformanceCharts:
     def __init__(self):
-        # Configuration de la figure Matplotlib avec 3 sous-graphiques
+        # Configuration avec style sombre pour aller avec le jeu
+        plt.style.use("dark_background")
         self.fig, (self.ax_score, self.ax_steps, self.ax_time) = plt.subplots(
             3, 1, figsize=(6, 10)
         )
         plt.subplots_adjust(hspace=0.4)
 
-        # Données pour A*
-        self.astar_episodes = []
-        self.astar_scores = []
-        self.astar_steps = []
-        self.astar_times = []
+        # On prépare les listes de données
+        self.episodes = []
+        self.astar_data = {"score": [], "steps": [], "time": []}
+        self.rl_data = {"score": [], "steps": [], "time": []}
 
-        # Données pour RL
-        self.rl_episodes = []
-        self.rl_scores = []
-        self.rl_steps = []
-        self.rl_times = []
+        # --- CRÉATION DES OBJETS LIGNES ---
+        # On crée les lignes une seule fois, on ne fera que mettre à jour leurs données
+        (self.line_score_astar,) = self.ax_score.plot([], [], label="A*", color="cyan")
+        (self.line_score_rl,) = self.ax_score.plot([], [], label="RL", color="orange")
+
+        (self.line_steps_astar,) = self.ax_steps.plot([], [], color="cyan")
+        (self.line_steps_rl,) = self.ax_steps.plot([], [], color="orange")
+
+        (self.line_time_astar,) = self.ax_time.plot([], [], color="cyan")
+        (self.line_time_rl,) = self.ax_time.plot([], [], color="orange")
 
         self._setup_axes()
-        plt.ion()  # Mode interactif ON
-        plt.show()
+        plt.ion()
+        plt.show(block=False)
 
     def _setup_axes(self):
         self.ax_score.set_title("Score vs Épisodes")
         self.ax_steps.set_title("Pas vs Épisodes")
-        self.ax_time.set_title("Temps (ms) vs Épisodes")
+        self.ax_time.set_title("Latence (ms) vs Épisodes")
+        self.ax_score.legend(loc="upper left")
 
     def update_data(self, episode, astar_metrics, rl_metrics):
-        """Reçoit les métriques et met à jour les listes de données."""
-        # A*
-        self.astar_episodes.append(episode)
-        self.astar_scores.append(astar_metrics["score"])
-        self.astar_steps.append(astar_metrics["steps"])
-        self.astar_times.append(astar_metrics["avg_latency"] * 1000)
+        self.episodes.append(episode)
 
-        # RL
-        self.rl_episodes.append(episode)
-        self.rl_scores.append(rl_metrics["score"])
-        self.rl_steps.append(rl_metrics["steps"])
-        self.rl_times.append(rl_metrics["avg_latency"] * 1000)
+        # Mise à jour des listes internes
+        self.astar_data["score"].append(astar_metrics["score"])
+        self.astar_data["steps"].append(astar_metrics["steps"])
+        self.astar_data["time"].append(astar_metrics["avg_latency"] * 1000)
 
-        self._render_charts()
+        self.rl_data["score"].append(rl_metrics["score"])
+        self.rl_data["steps"].append(rl_metrics["steps"])
+        self.rl_data["time"].append(rl_metrics["avg_latency"] * 1000)
 
-    def _render_charts(self):
-        # Nettoyage et rafraîchissement des courbes
+        # --- MISE À JOUR ULTRA-RAPIDE ---
+        # On injecte les nouvelles données dans les lignes sans effacer l'axe
+        self.line_score_astar.set_data(self.episodes, self.astar_data["score"])
+        self.line_score_rl.set_data(self.episodes, self.rl_data["score"])
+
+        self.line_steps_astar.set_data(self.episodes, self.astar_data["steps"])
+        self.line_steps_rl.set_data(self.episodes, self.rl_data["steps"])
+
+        self.line_time_astar.set_data(self.episodes, self.astar_data["time"])
+        self.line_time_rl.set_data(self.episodes, self.rl_data["time"])
+
+        # Ajustement automatique des limites des axes pour voir les courbes
         for ax in [self.ax_score, self.ax_steps, self.ax_time]:
-            ax.clear()
+            ax.relim()
+            ax.autoscale_view()
 
-        self._setup_axes()
-
-        # Courbes Score
-        self.ax_score.plot(
-            self.astar_episodes, self.astar_scores, label="A*", color="cyan"
-        )
-        self.ax_score.plot(self.rl_episodes, self.rl_scores, label="RL", color="orange")
-        self.ax_score.legend()
-
-        # Courbes Steps
-        self.ax_steps.plot(self.astar_episodes, self.astar_steps, color="cyan")
-        self.ax_steps.plot(self.rl_episodes, self.rl_steps, color="orange")
-
-        # Courbes Latence
-        self.ax_time.plot(self.astar_episodes, self.astar_times, color="cyan")
-        self.ax_time.plot(self.rl_episodes, self.rl_times, color="orange")
-
-        plt.pause(0.001)  # Nécessaire pour mettre à jour la fenêtre Matplotlib
+        self.fig.canvas.flush_events()  # Plus rapide que plt.draw()
+        plt.pause(0.001)

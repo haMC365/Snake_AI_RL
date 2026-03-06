@@ -19,28 +19,65 @@ class DuelManager:
         self.state_astar = engine_astar.get_state()
         self.state_rl = engine_rl.get_state()
 
-        # Initialisation des stats
-        self.start_time = time.time()
-        self.astar_latencies = []
-        self.rl_latencies = []
-        self.astar_max_latency = 0.0
-        self.rl_max_latency = 0.0
+        # Dictionnaire consolidé pour faciliter le transfert vers les charts
+        self.metrics = {
+            "astar": {
+                "score": 0,
+                "steps": 0,
+                "avg_latency": 0.0,
+                "total_time": 0.0,
+                "alive": True,
+            },
+            "rl": {
+                "score": 0,
+                "steps": 0,
+                "avg_latency": 0.0,
+                "total_time": 0.0,
+                "alive": True,
+            },
+        }
 
-        # Pool de threads pour le vrai parallélisme
+        self.start_time = time.time()  # Pour le calcul du runtime
+        self.astar_max_latency = 0.0  # Pour enregistrer le pire pic de l'A*
+        self.rl_max_latency = 0.0  # Pour enregistrer le pire pic du RL
+
+        # Pool de threads pour exécuter les deux cerveaux en même temps
         self.executor = ThreadPoolExecutor(max_workers=2)
 
-    def _agent_step(self, agent, engine, latencies_list):
-        """Méthode générique pour exécuter un pas d'agent avec mesure de temps."""
+    def _agent_step(self, agent, engine, agent_key):
+        """
+        Exécute un pas pour un agent, mesure la performance et met à jour les états.
+        agent_key doit être "astar" ou "rl".
+        """
         state = engine.get_state()
+
+        # Si le serpent est déjà mort, on ne fait rien
         if not state.alive:
+            self.metrics[agent_key]["alive"] = False
             return 0.0
 
+        # --- MESURE DE LA RÉFLEXION ---
         t0 = time.perf_counter()
         action = agent.get_action(state)
         dt = time.perf_counter() - t0
 
-        engine.step(action)
-        latencies_list.append(dt)
+        # --- MISE À JOUR DU MOTEUR ---
+        alive = engine.step(action)
+
+        # --- MISE À JOUR DES MÉTRIQUES ---
+        m = self.metrics[agent_key]
+        m["steps"] += 1
+        m["total_time"] += dt
+        m["avg_latency"] = m["total_time"] / m["steps"]
+        m["score"] = engine.state.score
+        m["alive"] = alive
+
+        # Mise à jour des références d'état pour le Renderer
+        if agent_key == "astar":
+            self.state_astar = engine.get_state()
+        else:
+            self.state_rl = engine.get_state()
+
         return dt
 
     def _safe_agent_step(self, agent, engine, latencies_list):
@@ -111,31 +148,30 @@ class DuelManager:
     # --- Étape 3 : Synchronisation (Step Principal) ---
 
     def step(self):
-        """Lance les calculs des deux agents en parallèle."""
-        # Soumission des tâches au pool de threads
+        """Lance les calculs des deux agents en parallèle et synchronise les résultats."""
+        # 1. Soumission des tâches au pool de threads
+        # On utilise "astar" et "rl" comme clés pour mettre à jour le dictionnaire metrics
         future_astar = self.executor.submit(
-            self._safe_agent_step,
-            self.astar_agent,
-            self.engine_astar,
-            self.astar_latencies,
+            self._agent_step, self.astar_agent, self.engine_astar, "astar"
         )
         future_rl = self.executor.submit(
-            self._safe_agent_step, self.rl_agent, self.engine_rl, self.rl_latencies
+            self._agent_step, self.rl_agent, self.engine_rl, "rl"
         )
 
-        # Récupération des résultats (bloquant jusqu'à la fin des calculs)
+        # 2. Récupération des résultats (attend que les deux agents aient fini de réfléchir)
         dt_astar = future_astar.result()
         dt_rl = future_rl.result()
 
-        # Mise à jour des latences maximales
+        # 3. Mise à jour des latences maximales (Peak latency)
+        # Optionnel : Utile pour diagnostiquer les ralentissements soudains de l'A*
         if dt_astar > self.astar_max_latency:
             self.astar_max_latency = dt_astar
         if dt_rl > self.rl_max_latency:
             self.rl_max_latency = dt_rl
 
-        # Rafraîchissement des états pour le renderer
-        self.state_astar = self.engine_astar.get_state()
-        self.state_rl = self.engine_rl.get_state()
+        # 4. Vérification de fin de partie
+        # Retourne False si les deux serpents sont morts
+        return self.metrics["astar"]["alive"] or self.metrics["rl"]["alive"]
 
     # --- Étape 4 : Shutdown ---
 
@@ -148,23 +184,12 @@ class DuelManager:
         """Prépare le dictionnaire de métriques pour l'interface UI."""
         runtime = time.time() - self.start_time
 
-        # Calcul des moyennes (évite division par zéro)
-        avg_astar = np.mean(self.astar_latencies) if self.astar_latencies else 0.0
-        avg_rl = np.mean(self.rl_latencies) if self.rl_latencies else 0.0
+        # On injecte le runtime et les pics de latence dans le dictionnaire déjà prêt
+        self.metrics["astar"]["max_latency"] = float(self.astar_max_latency)
+        self.metrics["astar"]["runtime"] = float(runtime)
 
-        return {
-            "astar": {
-                "score": getattr(self.state_astar, "score", 0),
-                "steps": getattr(self.state_astar, "steps", 0),
-                "avg_latency": float(avg_astar),
-                "max_latency": float(self.astar_max_latency),
-                "runtime": float(runtime),
-            },
-            "rl": {
-                "score": getattr(self.state_rl, "score", 0),
-                "steps": getattr(self.state_rl, "steps", 0),
-                "avg_latency": float(avg_rl),
-                "max_latency": float(self.rl_max_latency),
-                "runtime": float(runtime),
-            },
-        }
+        self.metrics["rl"]["max_latency"] = float(self.rl_max_latency)
+        self.metrics["rl"]["runtime"] = float(runtime)
+
+        # On retourne une copie pour éviter les problèmes de threads avec l'UI
+        return {"astar": self.metrics["astar"].copy(), "rl": self.metrics["rl"].copy()}
