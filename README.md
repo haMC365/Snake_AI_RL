@@ -63,7 +63,7 @@ Indispensables pour compiler certains modules Python et gérer le dépôt :
 sudo apt-get install -y python3-dev build-essential curl git
 ```
 
-> #### [!IMPORTANT]
+> [!IMPORTANT]
 > Note pour WSL : > 
 > - Windows 11 (WSLg) : L'affichage est géré nativement. La fenêtre du jeu s'ouvrira directement sur votre bureau Windows.
 > - Windows 10 : Si vous n'avez pas de serveur graphique configuré, vous devrez utiliser un serveur X (comme VcXsrv) ou exécuter les scripts en mode "headless" `(export SDL_VIDEODRIVER=dummy)`
