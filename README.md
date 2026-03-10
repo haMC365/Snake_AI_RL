@@ -63,11 +63,10 @@ Indispensables pour compiler certains modules Python et gérer le dépôt :
 sudo apt-get install -y python3-dev build-essential curl git
 ```
 
-#### [!IMPORTANT]
-Note pour WSL : > 
-- Windows 11 (WSLg) : L'affichage est géré nativement. La fenêtre du jeu s'ouvrira directement sur votre bureau Windows.
-
- - Windows 10 : Si vous n'avez pas de serveur graphique configuré, vous devrez utiliser un serveur X (comme VcXsrv) ou exécuter les scripts en mode "headless" `(export SDL_VIDEODRIVER=dummy)`
+> #### [!IMPORTANT]
+> Note pour WSL : > 
+> - Windows 11 (WSLg) : L'affichage est géré nativement. La fenêtre du jeu s'ouvrira directement sur votre bureau Windows.
+> - Windows 10 : Si vous n'avez pas de serveur graphique configuré, vous devrez utiliser un serveur X (comme VcXsrv) ou exécuter les scripts en mode "headless" `(export SDL_VIDEODRIVER=dummy)`
 
 
 ## 4. 🚀 Installation Rapide
@@ -102,8 +101,8 @@ Pour être certain que tout est prêt, lancez une commande de test :
 uv --version
 ```
 
-[!TIP]
-Pourquoi uv sync ? > Contrairement à pip install, cette commande supprime les paquets inutiles et s'assure que votre dossier .venv est une copie conforme de l'environnement de développement officiel.
+> [!TIP]
+> Pourquoi uv sync ? > Contrairement à pip install, cette commande supprime les paquets inutiles et s'assure que votre dossier .venv est une copie conforme de l'environnement de développement officiel.
 
 
 ## 5. 🧪 Compiler et Valider (Qualité du Code)
@@ -134,8 +133,8 @@ uv run ruff format .
 uv run ruff check . --fix
 ```
 
-[!NOTE]
-Pipeline CI/CD : Chaque push sur GitHub déclenche automatiquement ces vérifications. Si pytest ou ruff échouent en local, votre Pull Request sera bloquée sur GitHub.
+> [!NOTE]
+> Pipeline CI/CD : Chaque push sur GitHub déclenche automatiquement ces vérifications. Si pytest ou ruff échouent en local, votre Pull Request sera bloquée sur GitHub.
 
 ## 6. 🎮 Exécution et Commandes
 
@@ -169,8 +168,8 @@ Si vous développez de nouvelles fonctionnalités pour l'IA, utilisez ce script 
 uv run scripts/check_encoder.py
 ```
 
-[!TIP]
-Performance : Si vous trouvez que le serpent est trop lent ou trop rapide en mode manuel, vous pouvez ajuster les FPS dans la configuration du moteur de jeu.
+> [!TIP]
+> Performance : Si vous trouvez que le serpent est trop lent ou trop rapide en mode manuel, vous pouvez ajuster les FPS dans la configuration du moteur de jeu.
 
 ## 8. 🧠 Architecture de l'IA (Encodeur)
 
