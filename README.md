@@ -37,7 +37,6 @@ Snake_AI_RL/
 ├── main.py               # Point d'entrée de l'application
 ├── pyproject.toml        # Configuration du projet et dépendances (uv)
 └── uv.lock               # Verrouillage exact des versions Python
----
 ```
 
 ## 3. 🛠️ Prérequis Système (WSL / Linux)

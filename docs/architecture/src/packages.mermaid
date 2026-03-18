@@ -1,0 +1,29 @@
+graph TD
+    subgraph "Niveau Entrée"
+        Main[main.py]
+    end
+
+    subgraph "Niveau Simulation"
+        MM[ModeManager]
+        DM[DuelManager]
+    end
+
+    subgraph "Niveau Intelligence"
+        RL[RLAgent]
+        AS[AStarAgent]
+        Enc[StateEncoder]
+    end
+
+    subgraph "Niveau Moteur"
+        Eng[SnakeEngine]
+        Core[GameState]
+    end
+
+    Main --> MM
+    MM --> DM
+    DM --> RL
+    DM --> AS
+    RL --> Enc
+    RL --> Core
+    AS --> Core
+    Eng --> Core
