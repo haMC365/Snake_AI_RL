@@ -13,6 +13,16 @@ Une plateforme de simulation de Snake haute performance conçue pour comparer l'
 * [**Guide des Opérations (Entraînement & Tests)**](docs/operations.md)
 ---
 
+### 📖 Documentation de Soutenance
+Retrouvez l'intégralité de la documentation académique :
+* Le **Cahier des Charges** (Objectifs et contraintes).
+* Le **Rapport de Conception** (Architecture UML, choix techniques).
+* Le **Rapport Final** (Analyse des benchmarks et conclusion).
+
+👉 [Consulter les rapports complets ici](docs/references.md#documents-de-projet-officiels)
+
+---
+
 
 ## ✨ Fonctionnalités (Features)
 

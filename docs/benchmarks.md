@@ -2,7 +2,7 @@
 
 Le graphique `comparison_chart.png` généré par nos scripts de test permet de comparer objectivement les performances des deux approches sur une série d'épisodes identiques.
 
-![Exemple de graphique de comparaison](benchmarks/comparison_chart.png)
+![Exemple de graphique de comparaison](../benchmarks/comparison_chart.png)
 
 ### 📈 Interprétation des axes
 * **Axe X (Épisodes)** : Représente la répétition des parties. Plus l'indice augmente, plus nous observons la stabilité de l'agent.
