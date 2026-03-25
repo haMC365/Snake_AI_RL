@@ -17,8 +17,28 @@ Dynamic: license-file
 
 # 🐍 Snake AI - Benchmarking Platform (RL vs A*)
 
+![Python](https://img.shields.io/badge/python-3.12-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Tests](https://img.shields.io/badge/tests-8/8%20passed-brightgreen.svg)
+
 Une plateforme de simulation de Snake haute performance conçue pour comparer l'intelligence humaine, les algorithmes de recherche de chemin classiques (**A***) et l'apprentissage par renforcement (**RL**).
 
+---
+### 📚 Documentation Approfondie
+* [**Guide d'Installation détaillé (WSL)**](docs/installation.md)
+* [**Architecture & Schéma de données**](docs/architecture.md)
+* [**Guide des Opérations (Entraînement & Tests)**](docs/operations.md)
+---
+
+### 📖 Documentation de Soutenance
+Retrouvez l'intégralité de la documentation académique :
+* Le **Cahier des Charges** (Objectifs et contraintes).
+* Le **Rapport de Conception** (Architecture UML, choix techniques).
+* Le **Rapport Final** (Analyse des benchmarks et conclusion).
+
+👉 [Consulter les rapports complets ici](docs/references.md#documents-de-projet-officiels)
+
+---
 
 
 ## ✨ Fonctionnalités (Features)
@@ -34,6 +54,29 @@ Le projet **Snake AI** offre un environnement complet pour le développement et 
 * **✅ Qualité Industrielle** : Intégration continue (CI) avec validation automatique des tests unitaires, formatage du code via `Ruff` et gestion des dépendances via `uv`.
 ---
 
+### Démonstration et Performance
+Le mode Duel permet de visualiser les strategies divergentes:
+* **A***: *Recherche de chemin déterministe (optimalité à court terme)*.
+* **RL (Q-Learning)**: Comportement appris par expérience (gestion de l'espace).
+
+![Comparaison A* vs RL](docs/architecture/img/duel_screenshot.png)
+
+### Analyse des Performances
+Les résultats des simulations sont compilés automatiquement dans un graphique de benchmarking:
+![Graphique de Performance](benchmarks/comparison_chart.png)
+
+
+## 📐 Conception Logicielle (UML)
+Le projet suit une architecture découplée pour isoler la logique de jeu de l'intelligence Articificielle.
+
+![Diagramme de Classes UML](docs/architecture/img/class_diagram.png)
+
+**Concepts clés appliqués :**
+* **Singleton/Configuration**: Gestion centralisée via `settings.py`
+* **Deep Copying** : Clonage d'état pour garantir l'équite du Duel.
+* **Abstraction d'Agent** : Interface commune pour A* et le Q-Learning.
+
+
 ## 🏗️ Structure du Projet
 
 L'architecture est organisée selon le principe de **séparation des préoccupations** (SOC), garantissant que la logique de l'IA est totalement indépendante de l'affichage graphique.
@@ -48,13 +91,12 @@ Snake_AI_RL/
 │   ├── engine/           # Moteur physique et règles du jeu (SnakeEngine)
 │   ├── agents/           # Intelligence Artificielle
 │   │   ├── rl/           # Agent Reinforcement Learning (Modèles, Encoders)
-│   │   └── search/       # Agent A* (Pathfinding)
+│   │   └── astar/        # Agent A* (Pathfinding)
 │   ├── simulation/       # Gestion des modes (Manual, Duel, ModeManager)
 │   └── ui/               # Interface graphique et rendu (SnakeRenderer)
 ├── main.py               # Point d'entrée de l'application
 ├── pyproject.toml        # Configuration du projet et dépendances (uv)
 └── uv.lock               # Verrouillage exact des versions Python
----
 ```
 
 ## 3. 🛠️ Prérequis Système (WSL / Linux)
@@ -81,7 +123,7 @@ sudo apt-get install -y python3-dev build-essential curl git
 ```
 
 > [!IMPORTANT]
-> Note pour WSL : > 
+> Note pour WSL :
 > - Windows 11 (WSLg) : L'affichage est géré nativement. La fenêtre du jeu s'ouvrira directement sur votre bureau Windows.
 > - Windows 10 : Si vous n'avez pas de serveur graphique configuré, vous devrez utiliser un serveur X (comme VcXsrv) ou exécuter les scripts en mode "headless" `(export SDL_VIDEODRIVER=dummy)`
 
@@ -100,7 +142,7 @@ curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | 
 source $HOME/.cargo/env
 ```
 ### B. Configurer le projet
-Une fois uv installé, clonez le dépôt et laissez l'outil créer l'environnement virtuel et installer les dépendances (Pygame, Pytest, Ruff, etc.) automatiquement :
+Une fois `uv` installé, clonez le dépôt et laissez l'outil créer l'environnement virtuel et installer les dépendances (Pygame, Pytest, Ruff, etc.) automatiquement :
 
 ```bash
 # 1. Cloner le projet
@@ -108,7 +150,7 @@ git clone https://github.com/haMC365/Snake_AI_RL
 cd Snake_AI_RL
 
 # 2. Créer l'environnement et installer les dépendances (lit le fichier uv.lock)
-uv syn
+uv sync
 ```
 
 ### C. Vérifier l'installation
@@ -119,7 +161,8 @@ uv --version
 ```
 
 > [!TIP]
-> Pourquoi uv sync ? > Contrairement à pip install, cette commande supprime les paquets inutiles et s'assure que votre dossier .venv est une copie conforme de l'environnement de développement officiel.
+> Pourquoi uv sync ?
+> Contrairement à pip install, cette commande supprime les paquets inutiles et s'assure que votre dossier .venv est une copie conforme de l'environnement de développement officiel.
 
 
 ## 5. 🧪 Compiler et Valider (Qualité du Code)
@@ -207,7 +250,13 @@ L'état du jeu est encodé selon trois catégories d'informations :
 3. **Position de la Nourriture (4 bits)** :
    - La nourriture est-elle plus haut, plus bas, plus à gauche ou plus à droite que la tête ?
 
+### Logique d'Apprentissage (Q-Learning)
+L'agent est entraîné selon l'équation de Bellman (Temporal Difference learning) :
 
+$$Q(s, a) \leftarrow Q(s, a) + \alpha [R + \gamma \max_{a'} Q(s', a') - Q(s, a)]$$
+
+* **Récompenses ($R$)** : +10 (Pomme), -100 (Collision), +1 (Se rapproche de la cible).
+* **Espace d'état** : Encodage compact de 11 bits pour limiter l'explosion combinatoire ($2^{11}$ états possibles).
 
 ### Fonctionnement de l'Encodage
 

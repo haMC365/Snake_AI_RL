@@ -1,3 +1,7 @@
+"""
+Ce module sert pour comparer visuellement le fonctionnement d'A* et RL
+"""
+
 import random
 import numpy as np
 import csv

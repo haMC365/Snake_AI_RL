@@ -1,7 +1,20 @@
+"""
+Gestion des duels en temps réel entre A* et RL
+
+Ce module fournit le 'Duel Manager', qui executé les décisions des deux agents
+en parallèle via du multithreading, collecte les métriques de performance
+(latence, score, étapes, etc.) et synchronise les états pour l'affichage.
+"""
+
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-# import numpy as np
+from typing import Any, Tuple
+
+from snake_ai.engine.game import SnakeEngine
+from snake_ai.agents.astar.astar_agent import AStarAgent
+from snake_ai.agents.rl.rl_agent import RLAgent
+from snake_ai.core.game_state import GameState
 
 
 class DuelManager:
@@ -10,18 +23,28 @@ class DuelManager:
     Exécute les décisions en parallèle pour optimiser les performances.
     """
 
-    def __init__(self, engine_astar, engine_rl, astar_agent, rl_agent):
+    def __init__(
+        self,
+        engine_astar: SnakeEngine,
+        engine_rl: SnakeEngine,
+        astar_agent: AStarAgent,
+        rl_agent: RLAgent,
+    ):
         self.engine_astar = engine_astar
         self.engine_rl = engine_rl
         self.astar_agent = astar_agent
         self.rl_agent = rl_agent
+
+        self.last_food_pos: dict[str, Any] = {"astar": None, "rl": None}
+        self.steps_at_food_spawn: dict[str, int] = {"astar": 0, "rl": 0}
+        self.initial_dist: dict[str, int] = {"astar": 0, "rl": 0}
 
         # On garde une référence aux états actuels
         self.state_astar = engine_astar.get_state()
         self.state_rl = engine_rl.get_state()
 
         # Dictionnaire consolidé pour faciliter le transfert vers les charts
-        self.metrics = {
+        self.metrics: dict[str, dict[str, Any]] = {
             "astar": {
                 "score": 0,
                 "steps": 0,
@@ -38,6 +61,11 @@ class DuelManager:
             },
         }
 
+        # Initilisation des métriques avec "efficiency"
+        for key in ["astar", "rl"]:
+            self.metrics[key]["efficiency"] = 1.0  # 100% au debut
+            self.metrics[key]["eff_list"] = []  # Pour la moyenne glissante
+
         self.start_time = time.time()  # Pour le calcul du runtime
         self.astar_max_latency = 0.0  # Pour enregistrer le pire pic de l'A*
         self.rl_max_latency = 0.0  # Pour enregistrer le pire pic du RL
@@ -45,24 +73,43 @@ class DuelManager:
         # Pool de threads pour exécuter les deux cerveaux en même temps
         self.executor = ThreadPoolExecutor(max_workers=2)
 
-    def _agent_step(self, agent, engine, agent_key):
+    def _get_manhattan(self, p1: Tuple[int, int], p2: Tuple[int, int]) -> int:
+        """Retourne la distance de Manhattan"""
+        return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+    def _agent_step(
+        self, agent: AStarAgent | RLAgent, engine: SnakeEngine, agent_key: str
+    ):
         """
         Exécute un pas pour un agent, mesure la performance et met à jour les états.
         agent_key doit être "astar" ou "rl".
         """
-        state = engine.get_state()
+        state: GameState = engine.get_state()
 
         # Si le serpent est déjà mort, on ne fait rien
         if not state.alive:
             self.metrics[agent_key]["alive"] = False
             return 0.0
 
+        # ----- LOGIQUE D'EFFICATITE -----
+        # Si la pomme a change de place, on enregistre la nouvelle distance de départ
+        current_food = state.food
+        if current_food != self.last_food_pos[agent_key]:
+            self.last_food_pos[agent_key] = current_food
+            self.steps_at_food_spawn[agent_key] = engine.state.steps
+            self.initial_dist[agent_key] = self._get_manhattan(
+                state.head(), current_food
+            )
+
         # --- MESURE DE LA RÉFLEXION ---
         t0 = time.perf_counter()
         action = agent.get_action(state)
         dt = time.perf_counter() - t0
 
-        # --- MISE À JOUR DU MOTEUR ---
+        # SAUVEGARDE du score AVANT le mouvement
+        old_score: int = engine.state.score
+
+        # Mise a jour du moter
         alive = engine.step(action)
 
         # --- MISE À JOUR DES MÉTRIQUES ---
@@ -78,6 +125,16 @@ class DuelManager:
             self.state_astar = engine.get_state()
         else:
             self.state_rl = engine.get_state()
+
+        # Si une pomme est mangée, on calcule l'efficacité sur ce trajet
+        if engine.state.score > old_score:
+            steps_taken = engine.state.steps - self.steps_at_food_spawn[agent_key]
+            if steps_taken > 0:
+                # Ratio = Distance la plus courte / Pas réels
+                eff = self.initial_dist[agent_key] / steps_taken
+                m["eff_list"].append(min(1.0, eff))
+                # Moyenne glissante sur les 10 dernières pommes
+                m["efficiency"] = sum(m["eff_list"][-10:]) / len(m["eff_list"][-10:])
 
         return dt
 
@@ -178,19 +235,19 @@ class DuelManager:
 
     def shutdown(self):
         """Arrête proprement l'executor à la fin du programme."""
-        print("🛑 Arrêt du DuelManager (Threads)...")
+        print("Arrêt du DuelManager (Threads)...")
         self.executor.shutdown(wait=True)
 
     def get_metrics(self):
         """Prépare le dictionnaire de métriques pour l'interface UI."""
         runtime = time.time() - self.start_time
 
-        # On injecte le runtime et les pics de latence dans le dictionnaire déjà prêt
-        self.metrics["astar"]["max_latency"] = float(self.astar_max_latency)
-        self.metrics["astar"]["runtime"] = float(runtime)
+        # Mise à jour des métriques temporelles
+        for key in ["astar", "rl"]:
+            self.metrics[key]["max_latency"] = float(
+                self.astar_max_latency if key == "astar" else self.rl_max_latency
+            )
+            self.metrics[key]["runtime"] = float(runtime)
 
-        self.metrics["rl"]["max_latency"] = float(self.rl_max_latency)
-        self.metrics["rl"]["runtime"] = float(runtime)
-
-        # On retourne une copie pour éviter les problèmes de threads avec l'UI
-        return {"astar": self.metrics["astar"].copy(), "rl": self.metrics["rl"].copy()}
+        # On retourne une copie profonde pour éviter les conflits de lecture/écriture entre threads
+        return {"astar": {**self.metrics["astar"]}, "rl": {**self.metrics["rl"]}}

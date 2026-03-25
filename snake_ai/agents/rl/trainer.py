@@ -1,14 +1,20 @@
+"""
+Ce module sert pour declencher l'entrainement
+"""
+
 import os
 import random
 import msgpack
 import numpy as np
-from datetime import datetime
+
 from torch.utils.tensorboard import SummaryWriter
 import sys
 
 from snake_ai.core.game_state import GameState
 from snake_ai.engine.game import SnakeEngine
 from snake_ai.agents.rl.encoders import StateEncoder
+
+from datetime import datetime
 
 
 class RLMonitor:
@@ -30,11 +36,11 @@ class RLMonitor:
 class QTrainer:
     def __init__(
         self,
-        learning_rate=0.1,
-        discount_factor=0.95,
-        epsilon_start=1.0,
-        epsilon_end=0.01,
-        epsilon_decay=0.9995,
+        learning_rate: float = 0.1,
+        discount_factor: float = 0.95,
+        epsilon_start: float = 1.0,
+        epsilon_end: float = 0.01,
+        epsilon_decay: float = 0.9995,
     ):
 
         self.lr = learning_rate
@@ -76,8 +82,9 @@ class QTrainer:
         new_value = old_value + self.lr * (reward + self.gamma * next_max - old_value)
         self.q_table[state_key][action] = new_value
 
-    def train(self, num_episodes=10000, save_path="data/q_table.msgpack"):
-        print(f"🚀 Décollage de l'entraînement pour {num_episodes} épisodes...")
+    def train(self, num_episodes: int = 10000, save_path: str = "data/q_table.msgpack"):
+        """Fonction pour declencher l'entrainement de le Snake"""
+        print(f"Décollage de l'entraînement pour {num_episodes} épisodes...")
 
         for episode in range(num_episodes):
             initial_state = GameState(
@@ -175,13 +182,13 @@ class QTrainer:
 
 
 if __name__ == "__main__":
-    trainer = QTrainer()
-    episodes = 15000
+    trainer: QTrainer = QTrainer()
+    episodes: int = 15000
     if len(sys.argv) > 1:
         try:
             episodes = int(sys.argv[1])
         except ValueError:
             if "--episodes" in sys.argv:
-                idx = sys.argv.index("--episodes")
+                idx: int = sys.argv.index("--episodes")
                 episodes = int(sys.argv[idx + 1])
     trainer.train(num_episodes=episodes)
