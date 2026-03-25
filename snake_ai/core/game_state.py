@@ -1,3 +1,26 @@
+"""
+Gestion de l'état de jeu Snake pour l'apprentissage par Renforcement.
+
+Ce module définit la classe GameState (@dataclass) qui représente l'état complet d'un partie:
+- Position d'un serpent, nourriture, dimensions de la grille, score, étapes, états de la vie.
+- Méthodes utilitaires: clonage profond, détection des collisions, validation des limites
+
+Utilise par:
+- Agent RL (snake_ai/agents/rl/) pour l'entrainement Q-learning.
+- Agent A* (snake_ai/agents/astar/) et simulations (snake_ai/simulation/)
+
+Exemple d'instantiation:
+    state = GameState(snake=[(5, 5)], direction = 'RIGHT', food = (10,10), grid_weight = 20, grid_height = 20)
+
+Classes principales:
+- GameState: Etat immuable du jeu avec méthodes de validation
+
+Fichiers liés:
+- snake_ai/core/game_state.py : Ce module
+- tests/test_game_state.py : Tests unitaires
+
+"""
+
 from dataclasses import dataclass
 from typing import List, Tuple
 from copy import deepcopy
@@ -5,6 +28,8 @@ from copy import deepcopy
 
 @dataclass
 class GameState:
+    """Représente l'etat complet d'une partie de Snake pour l'apprentissage par renforcement"""
+
     snake: List[Tuple[int, int]]
     direction: str
     food: Tuple[int, int]

@@ -1,27 +1,40 @@
+"""
+Ce module contient
+"""
+
+from typing import Any
+
 import matplotlib.pyplot as plt
 
 
 class LivePerformanceCharts:
+    """
+    Classe utilise pour montrer les performances
+    """
+
     def __init__(self):
-        # Configuration avec style sombre pour aller avec le jeu
         plt.style.use("dark_background")
-        self.fig, (self.ax_score, self.ax_steps, self.ax_time) = plt.subplots(
+        self.fig, (self.ax_score, self.ax_eff, self.ax_time) = plt.subplots(
             3, 1, figsize=(6, 10)
         )
         plt.subplots_adjust(hspace=0.4)
 
         # On prépare les listes de données
         self.episodes = []
-        self.astar_data = {"score": [], "steps": [], "time": []}
-        self.rl_data = {"score": [], "steps": [], "time": []}
+        self.astar_data: dict[str, list[Any]] = {
+            "score": [],
+            "efficiency": [],
+            "time": [],
+        }
+        self.rl_data: dict[str, list[Any]] = {"score": [], "efficiency": [], "time": []}
 
         # --- CRÉATION DES OBJETS LIGNES ---
         # On crée les lignes une seule fois, on ne fera que mettre à jour leurs données
         (self.line_score_astar,) = self.ax_score.plot([], [], label="A*", color="cyan")
         (self.line_score_rl,) = self.ax_score.plot([], [], label="RL", color="orange")
 
-        (self.line_steps_astar,) = self.ax_steps.plot([], [], color="cyan")
-        (self.line_steps_rl,) = self.ax_steps.plot([], [], color="orange")
+        (self.line_eff_astar,) = self.ax_eff.plot([], [], color="cyan")
+        (self.line_eff_rl,) = self.ax_eff.plot([], [], color="orange")
 
         (self.line_time_astar,) = self.ax_time.plot([], [], color="cyan")
         (self.line_time_rl,) = self.ax_time.plot([], [], color="orange")
@@ -32,37 +45,56 @@ class LivePerformanceCharts:
 
     def _setup_axes(self):
         self.ax_score.set_title("Score vs Épisodes")
-        self.ax_steps.set_title("Pas vs Épisodes")
+        self.ax_eff.set_title("Efficacité du Chemin (Manhattan / Pas)")
         self.ax_time.set_title("Latence (ms) vs Épisodes")
+
+        # On fixe l'axe Y de l'efficacité entre 0 et 1.1 pour plus de clarté
+        self.ax_eff.set_ylim(0, 1.1)
         self.ax_score.legend(loc="upper left")
 
     def update_data(self, episode, astar_metrics, rl_metrics):
+        # On enregistre l'épisode actuel
         self.episodes.append(episode)
 
-        # Mise à jour des listes internes
+        # --- TRAITEMENT DUEL A* (Cyan) ---
         self.astar_data["score"].append(astar_metrics["score"])
-        self.astar_data["steps"].append(astar_metrics["steps"])
-        self.astar_data["time"].append(astar_metrics["avg_latency"] * 1000)
 
+        # AJOUT : Condition critique pour la survie
+        if astar_metrics["alive"]:
+            self.astar_data["efficiency"].append(astar_metrics.get("efficiency", 1.0))
+            self.astar_data["time"].append(astar_metrics["avg_latency"] * 1000)
+        else:
+            # On utilise None pour que Matplotlib ARRETE de tracer la ligne
+            self.astar_data["efficiency"].append(None)
+            self.astar_data["time"].append(None)
+
+        # --- TRAITEMENT DUEL RL (Orange) ---
         self.rl_data["score"].append(rl_metrics["score"])
-        self.rl_data["steps"].append(rl_metrics["steps"])
-        self.rl_data["time"].append(rl_metrics["avg_latency"] * 1000)
 
-        # --- MISE À JOUR ULTRA-RAPIDE ---
-        # On injecte les nouvelles données dans les lignes sans effacer l'axe
+        # AJOUT : Condition critique pour la survie
+        if rl_metrics["alive"]:
+            self.rl_data["efficiency"].append(rl_metrics.get("efficiency", 1.0))
+            self.rl_data["time"].append(rl_metrics["avg_latency"] * 1000)
+        else:
+            # On utilise None pour "casser" la ligne orange ici
+            self.rl_data["efficiency"].append(None)
+            self.rl_data["time"].append(None)
+
+        # --- MISE À JOUR ULTRA-RAPIDE (Inchangée) ---
+        # Matplotlib gère les None automatiquement pour interrompre la ligne
         self.line_score_astar.set_data(self.episodes, self.astar_data["score"])
         self.line_score_rl.set_data(self.episodes, self.rl_data["score"])
 
-        self.line_steps_astar.set_data(self.episodes, self.astar_data["steps"])
-        self.line_steps_rl.set_data(self.episodes, self.rl_data["steps"])
+        self.line_eff_astar.set_data(self.episodes, self.astar_data["efficiency"])
+        self.line_eff_rl.set_data(self.episodes, self.rl_data["efficiency"])
 
         self.line_time_astar.set_data(self.episodes, self.astar_data["time"])
         self.line_time_rl.set_data(self.episodes, self.rl_data["time"])
 
-        # Ajustement automatique des limites des axes pour voir les courbes
-        for ax in [self.ax_score, self.ax_steps, self.ax_time]:
+        # Ajustement des axes (Inchangé)
+        for ax in [self.ax_score, self.ax_eff, self.ax_time]:
             ax.relim()
             ax.autoscale_view()
 
-        self.fig.canvas.flush_events()  # Plus rapide que plt.draw()
+        self.fig.canvas.flush_events()
         plt.pause(0.001)
