@@ -21,6 +21,7 @@ dev = [
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "ruff>=0.15.4",
+    "types-protobuf>=6.32.1.20260221",
 ]
 
 [build-system]

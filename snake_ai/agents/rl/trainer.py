@@ -2,38 +2,59 @@
 Ce module sert pour declencher l'entrainement
 """
 
+import sys
+from datetime import datetime
+from typing import List, Dict
+
 import os
 import random
-import msgpack
+import msgpack  # type: ignore
 import numpy as np
 
 from torch.utils.tensorboard import SummaryWriter
-import sys
-
 from snake_ai.core.game_state import GameState
 from snake_ai.engine.game import SnakeEngine
 from snake_ai.agents.rl.encoders import StateEncoder
-
-from datetime import datetime
 
 
 class RLMonitor:
     """Gère l'enregistrement des métriques pour TensorBoard."""
 
-    def __init__(self, log_dir):
-        self.writer = SummaryWriter(log_dir)
+    def __init__(self, log_dir: str):
+        self.writer: SummaryWriter = SummaryWriter(log_dir)
 
-    def log_metrics(self, episode, reward, score, steps, epsilon):
-        self.writer.add_scalar("Reward/Total", reward, episode)
-        self.writer.add_scalar("Game/Score", score, episode)
-        self.writer.add_scalar("Game/Steps", steps, episode)
-        self.writer.add_scalar("Exploration/Epsilon", epsilon, episode)
+    def log_metrics(
+        self,
+        episode: int,
+        reward: float,
+        score: int,
+        steps: int,
+        epsilon: float,
+        q_table_size: int,
+    ):
+        """Regroupement par dossier pour une interface propre"""
+        self.writer.add_scalar("1_Performance/Score", score, episode)
+        self.writer.add_scalar("1_Performance/Total_Reward", reward, episode)
+
+        self.writer.add_scalar("2_Efficiency/Steps_per_Episode", steps, episode)
+
+        self.writer.add_scalar("3_RL_Internals/Epsilon", epsilon, episode)
+        self.writer.add_scalar("3_RL_Internals/Q_Table_Entries", q_table_size, episode)
 
     def close(self):
+        self.writer.flush()
         self.writer.close()
 
 
 class QTrainer:
+    """
+    Agent d'entrainement par Q-Learning pour le jeu Snake.
+
+    Cette classe gère le cycle de vie de l'apprentissage, incluant l'exploration
+    via une stratagie Epsilon-Greedy, la mise à jour de la Q-Table via l'equation
+    de Bellman, et le monitoring de performances via Tensorboard.
+    """
+
     def __init__(
         self,
         learning_rate: float = 0.1,
@@ -50,18 +71,20 @@ class QTrainer:
         self.decay = epsilon_decay
 
         self.encoder = StateEncoder()
-        self.q_table = {}  # Format: { "state_str": [q_straight, q_right, q_left] }
+        self.q_table: Dict[str, List[float]] = (
+            {}
+        )  # Format: { "state_str": [q_straight, q_right, q_left] }
 
         # Configuration du monitoring
         log_name = datetime.now().strftime("%Y%m%d-%H%M%S")
         self.monitor = RLMonitor(f"logs/train_{log_name}")
 
-    def get_action_idx(self, state_key):
+    def get_action_idx(self, state_key: str):
         """Choisit une action (0, 1, 2) selon la stratégie Epsilon-Greedy."""
         if random.random() < self.epsilon:
             return random.randint(0, 2)
 
-        q_values = self.q_table.get(state_key, [0.0, 0.0, 0.0])
+        q_values: List[float] = self.q_table.get(state_key, [0.0, 0.0, 0.0])
         return np.argmax(q_values)
 
     def update_q_table(self, state, action, reward, next_state):
@@ -79,14 +102,20 @@ class QTrainer:
         old_value = self.q_table[state_key][action]
         next_max = max(self.q_table[next_state_key])
 
+        # Formule de Bellman
         new_value = old_value + self.lr * (reward + self.gamma * next_max - old_value)
         self.q_table[state_key][action] = new_value
+
+        # On retourne l'erreur (Temporal Difference Error)
+        return abs(new_value - old_value)
 
     def train(self, num_episodes: int = 10000, save_path: str = "data/q_table.msgpack"):
         """Fonction pour declencher l'entrainement de le Snake"""
         print(f"Décollage de l'entraînement pour {num_episodes} épisodes...")
 
         for episode in range(num_episodes):
+            episode_loss = []
+
             initial_state = GameState(
                 snake=[(5, 10), (4, 10), (3, 10)],
                 direction="RIGHT",
@@ -152,6 +181,12 @@ class QTrainer:
                 self.update_q_table(state_vec, action_idx, reward, next_state_vec)
 
                 total_reward += reward
+                loss = self.update_q_table(
+                    state_vec, action_idx, reward, next_state_vec
+                )
+                episode_loss.append(loss)
+
+            avg_loss = sum(episode_loss) / len(episode_loss) if episode_loss else 0
 
             # Decay epsilon (hors de la boucle while)
             if self.epsilon > self.epsilon_min:
@@ -168,6 +203,10 @@ class QTrainer:
                     engine.state.score,
                     engine.state.steps,
                     self.epsilon,
+                    len(self.q_table),  # On passe la taille de la table
+                )
+                self.monitor.writer.add_scalar(
+                    "3_RL_Internals/Avg_Loss", avg_loss, episode
                 )
 
         # 5. Sauvegarde finale

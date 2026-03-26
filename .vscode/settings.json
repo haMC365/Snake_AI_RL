@@ -1,0 +1,6 @@
+{
+    "python.analysis.diagnosticSeverityOverrides": {
+        // Désactive l'alerte spécifique pour les membres de type "Unknown"
+        "reportUnknownMemberType": "none"
+    }
+}
