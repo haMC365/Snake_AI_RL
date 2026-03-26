@@ -6,7 +6,7 @@ TSB		= uv run tensorboard
 
 # Valeurs par défaut pour l'entrainement
 EPISODES  	= 20000
-RENDER 		= False
+RENDER 		= true
 
 .PHONY: help install run train monitor test lint benchmark clean
 
