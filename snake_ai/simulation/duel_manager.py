@@ -8,8 +8,7 @@ en parallèle via du multithreading, collecte les métriques de performance
 
 import time
 from concurrent.futures import ThreadPoolExecutor
-
-from typing import Any, Tuple
+from typing import Any, Tuple, Dict
 
 from snake_ai.engine.game import SnakeEngine
 from snake_ai.agents.astar.astar_agent import AStarAgent
@@ -88,31 +87,25 @@ class DuelManager:
 
         # Si le serpent est déjà mort, on ne fait rien
         if not state.alive:
-            self.metrics[agent_key]["alive"] = False
+            # self.metrics[agent_key]["alive"] = False
             return 0.0
 
         # ----- LOGIQUE D'EFFICATITE -----
         # Si la pomme a change de place, on enregistre la nouvelle distance de départ
-        current_food = state.food
-        if current_food != self.last_food_pos[agent_key]:
-            self.last_food_pos[agent_key] = current_food
+        if state.food != self.last_food_pos[agent_key]:
+            self.last_food_pos[agent_key] = state.food
             self.steps_at_food_spawn[agent_key] = engine.state.steps
-            self.initial_dist[agent_key] = self._get_manhattan(
-                state.head(), current_food
-            )
+            self.initial_dist[agent_key] = self._get_manhattan(state.head(), state.food)
 
-        # --- MESURE DE LA RÉFLEXION ---
+        # --- MESURE DE TEMPS DE REFLEXION ---
         t0 = time.perf_counter()
         action = agent.get_action(state)
         dt = time.perf_counter() - t0
 
-        # SAUVEGARDE du score AVANT le mouvement
         old_score: int = engine.state.score
-
-        # Mise a jour du moter
         alive = engine.step(action)
 
-        # --- MISE À JOUR DES MÉTRIQUES ---
+        # --- MISE À JOUR DES MÉTRIQUES UNIQUEMENT SI LES PAS A ETE EFFECTUE ---
         m = self.metrics[agent_key]
         m["steps"] += 1
         m["total_time"] += dt
@@ -121,43 +114,41 @@ class DuelManager:
         m["alive"] = alive
 
         # Mise à jour des références d'état pour le Renderer
-        if agent_key == "astar":
-            self.state_astar = engine.get_state()
-        else:
-            self.state_rl = engine.get_state()
+        # if agent_key == "astar":
+        #     self.state_astar = engine.get_state()
+        # else:
+        #     self.state_rl = engine.get_state()
 
         # Si une pomme est mangée, on calcule l'efficacité sur ce trajet
         if engine.state.score > old_score:
             steps_taken = engine.state.steps - self.steps_at_food_spawn[agent_key]
             if steps_taken > 0:
-                # Ratio = Distance la plus courte / Pas réels
                 eff = self.initial_dist[agent_key] / steps_taken
                 m["eff_list"].append(min(1.0, eff))
-                # Moyenne glissante sur les 10 dernières pommes
                 m["efficiency"] = sum(m["eff_list"][-10:]) / len(m["eff_list"][-10:])
 
         return dt
 
-    def _safe_agent_step(self, agent, engine, latencies_list):
-        """
-        Exécute un pas de jeu de manière sécurisée.
-        Retourne la latence si l'agent est vivant, sinon 0.0.
-        """
-        state = engine.get_state()
-        if not state or not state.alive:
-            return 0.0
+    # def _safe_agent_step(self, agent, engine, latencies_list):
+    #     """
+    #     Exécute un pas de jeu de manière sécurisée.
+    #     Retourne la latence si l'agent est vivant, sinon 0.0.
+    #     """
+    #     state = engine.get_state()
+    #     if not state or not state.alive:
+    #         return 0.0
 
-        try:
-            t0 = time.perf_counter()
-            action = agent.get_action(state)
-            dt = time.perf_counter() - t0
+    #     try:
+    #         t0 = time.perf_counter()
+    #         action = agent.get_action(state)
+    #         dt = time.perf_counter() - t0
 
-            engine.step(action)
-            latencies_list.append(dt)
-            return dt
-        except Exception as e:
-            print(f"⚠️ Erreur lors du step d'un agent: {e}")
-            return 0.0
+    #         engine.step(action)
+    #         latencies_list.append(dt)
+    #         return dt
+    #     except Exception as e:
+    #         print(f"⚠️ Erreur lors du step d'un agent: {e}")
+    #         return 0.0
 
     # --- Étape 2 : Sous-méthodes privées (Workers) ---
 
@@ -207,6 +198,10 @@ class DuelManager:
 
     def step(self):
         """Lance les calculs des deux agents en parallèle et synchronise les résultats."""
+
+        if not (self.metrics["astar"]["alive"] and self.metrics["rl"]["alive"]):
+            return False
+
         # 1. Soumission des tâches au pool de threads
         # On utilise "astar" et "rl" comme clés pour mettre à jour le dictionnaire metrics
         future_astar = self.executor.submit(
@@ -227,9 +222,13 @@ class DuelManager:
         if dt_rl > self.rl_max_latency:
             self.rl_max_latency = dt_rl
 
+        # Mise à jour des états pour le rendu graphique
+        self.state_astar = self.engine_astar.get_state()
+        self.state_rl = self.engine_rl.get_state()
+
         # 4. Vérification de fin de partie
         # Retourne False si les deux serpents sont morts
-        return self.metrics["astar"]["alive"] or self.metrics["rl"]["alive"]
+        return self.metrics["astar"]["alive"] and self.metrics["rl"]["alive"]
 
     # --- Étape 4 : Shutdown ---
 
@@ -250,4 +249,5 @@ class DuelManager:
             self.metrics[key]["runtime"] = float(runtime)
 
         # On retourne une copie profonde pour éviter les conflits de lecture/écriture entre threads
-        return {"astar": {**self.metrics["astar"]}, "rl": {**self.metrics["rl"]}}
+        # return {"astar": {**self.metrics["astar"]}, "rl": {**self.metrics["rl"]}}
+        return self.metrics
