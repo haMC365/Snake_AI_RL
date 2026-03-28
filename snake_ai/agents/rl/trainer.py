@@ -31,6 +31,7 @@ class RLMonitor:
         steps: int,
         epsilon: float,
         q_table_size: int,
+        avg_loss: float,
     ):
         """Regroupement par dossier pour une interface propre"""
         self.writer.add_scalar("1_Performance/Score", score, episode)
@@ -40,6 +41,9 @@ class RLMonitor:
 
         self.writer.add_scalar("3_RL_Internals/Epsilon", epsilon, episode)
         self.writer.add_scalar("3_RL_Internals/Q_Table_Entries", q_table_size, episode)
+
+        if avg_loss > 0:
+            self.writer.add_scalar("3_RL_Internals/Avg_Loss", avg_loss, episode)
 
     def close(self):
         self.writer.flush()
@@ -71,9 +75,9 @@ class QTrainer:
         self.decay = epsilon_decay
 
         self.encoder = StateEncoder()
-        self.q_table: Dict[str, List[float]] = (
-            {}
-        )  # Format: { "state_str": [q_straight, q_right, q_left] }
+
+        # Format: { "state_str": [q_straight, q_right, q_left] }
+        self.q_table: Dict[str, List[float]] = {}
 
         # Configuration du monitoring
         log_name = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -87,10 +91,10 @@ class QTrainer:
         q_values: List[float] = self.q_table.get(state_key, [0.0, 0.0, 0.0])
         return np.argmax(q_values)
 
-    def update_q_table(self, state, action, reward, next_state):
+    def update_q_table(self, state_vec, action, reward, next_state_vec):
         """Applique l'équation de Bellman pour mettre à jour la Q-Table."""
-        state_key = str(state)
-        next_state_key = str(next_state)
+        state_key = str(state_vec)
+        next_state_key = str(next_state_vec)
 
         # Initialisation si état inconnu
         if state_key not in self.q_table:
@@ -110,12 +114,13 @@ class QTrainer:
         return abs(new_value - old_value)
 
     def train(self, num_episodes: int = 10000, save_path: str = "data/q_table.msgpack"):
-        """Fonction pour declencher l'entrainement de le Snake"""
+        """Fonction pour declencher l'entrainement"""
         print(f"Décollage de l'entraînement pour {num_episodes} épisodes...")
 
         for episode in range(num_episodes):
             episode_loss = []
 
+            # Initilisation de l'état
             initial_state = GameState(
                 snake=[(5, 10), (4, 10), (3, 10)],
                 direction="RIGHT",
@@ -138,7 +143,7 @@ class QTrainer:
                 # 1. Choisir l'action
                 action_idx = self.get_action_idx(str(state_vec))
 
-                # 2. Préparer la direction (Conversion relative -> absolue)
+                # 2. Conversion direction (Conversion relative -> absolue)
                 directions = ["UP", "RIGHT", "DOWN", "LEFT"]
                 curr_idx = directions.index(current_state.direction)
                 if action_idx == 0:
@@ -170,21 +175,14 @@ class QTrainer:
                     dist_after = abs(head_after[0] - engine.state.food[0]) + abs(
                         head_after[1] - engine.state.food[1]
                     )
+                    reward = 1.0 if dist_after < dist_before else -1.5
 
-                    if dist_after < dist_before:
-                        reward = 1.0  # Encourage à s'approcher
-                    else:
-                        reward = -1.5  # Décourage de s'éloigner ou de boucler
-
-                # 6. Mise à jour Q-Table
                 next_state_vec = self.encoder.encode(engine.get_state())
-                self.update_q_table(state_vec, action_idx, reward, next_state_vec)
-
-                total_reward += reward
                 loss = self.update_q_table(
                     state_vec, action_idx, reward, next_state_vec
                 )
                 episode_loss.append(loss)
+                total_reward += reward
 
             avg_loss = sum(episode_loss) / len(episode_loss) if episode_loss else 0
 
@@ -203,15 +201,15 @@ class QTrainer:
                     engine.state.score,
                     engine.state.steps,
                     self.epsilon,
-                    len(self.q_table),  # On passe la taille de la table
+                    len(self.q_table),
+                    avg_loss,
                 )
                 self.monitor.writer.add_scalar(
                     "3_RL_Internals/Avg_Loss", avg_loss, episode
                 )
-
         # 5. Sauvegarde finale
-        self.save(save_path)
         self.monitor.close()
+        self.save(save_path)
 
     def save(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
