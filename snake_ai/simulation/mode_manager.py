@@ -20,13 +20,13 @@ class ModeManager:
         current_state = self.engine.get_state()
 
         # 2. On injecte cet état dans les deux moteurs du duel
-        # On utilise deepcopy pour que les deux serpents IA soient indépendants
+        # Utilisation du deepcopy pour que les deux serpents IA soient indépendants
         self.duel_manager.engine_astar.state = copy.deepcopy(current_state)
         self.duel_manager.engine_rl.state = copy.deepcopy(current_state)
 
-        # 3. On synchronise aussi les références d'état dans le duel_manager
+        # 3. Synchronisation aussi les références d'état dans le duel_manager
         self.duel_manager.state_astar = self.duel_manager.engine_astar.get_state()
         self.duel_manager.state_rl = self.duel_manager.engine_rl.get_state()
 
         self.mode = GameMode.DUEL
-        print(f"🚀 Transition à l'étape {current_state.steps} : Duel activé !")
+        print(f"Transition à l'étape {current_state.steps} : Duel activé !")

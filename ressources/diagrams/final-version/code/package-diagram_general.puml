@@ -1,0 +1,90 @@
+@startuml
+' Configuration basique compatible Java 8+
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+' ===============================
+' Packages et classes
+' ===============================
+
+package "snake_ai.core" {
+    class GameState {
+        + grid_width: int
+        + grid_height: int
+        + snake_body: list
+        + food_pos: tuple
+        + direction: str
+    }
+}
+
+package "snake_ai.engine" {
+    class SnakeEngine {
+        + state: GameState
+        + fps: int
+        + step(action)
+        + reset()
+    }
+    class Snake
+    class Food
+    
+    SnakeEngine *-- Snake
+    SnakeEngine *-- Food
+}
+
+package "snake_ai.agents" {
+    abstract class BaseAgent {
+        + select_action(game)
+    }
+    class QTableAgent {
+        - _get_state_11bit()
+    }
+    class AStarAgent
+    class RLTrainer
+    
+    BaseAgent <|-- QTableAgent
+    BaseAgent <|-- AStarAgent
+    RLTrainer --> QTableAgent : trains
+}
+
+package "snake_ai.simulation" {
+    class DuelManager {
+        + step_parallel()
+    }
+    class ModeManager
+}
+
+package "snake_ai.ui" {
+    class Renderer
+    class ChartsRenderer
+}
+
+package "snake_ai.utils" {
+    class PersistenceManager
+    class MetricsLogger
+}
+
+' ===============================
+' Relations de dépendances
+' ===============================
+
+' 1. La donnée est au centre
+snake_ai.engine ..> snake_ai.core : manipulates
+snake_ai.ui ..> snake_ai.core : renders
+
+' 2. L'intelligence observe le moteur
+snake_ai.agents ..> snake_ai.engine : observes
+snake_ai.agents ..> snake_ai.core : encodes state
+
+' 3. L'orchestration pilote les composants
+snake_ai.simulation ..> snake_ai.engine : instantiates
+snake_ai.simulation ..> snake_ai.agents : invokes strategies
+
+' 4. Les services transverses supportent l'IA
+snake_ai.agents ..> snake_ai.utils : persists Q-Table
+snake_ai.agents ..> snake_ai.utils : logs to TensorBoard
+
+' 5. L'UI communique avec la simulation pour les stats
+snake_ai.ui ..> snake_ai.simulation : fetches duel stats
+
+@enduml

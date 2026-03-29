@@ -42,6 +42,7 @@ def test_mode_switch():
 
 
 def test_duel_states_independent():
+    """Fonction pour tester les duels states independante"""
     state = GameState(
         snake=[(5, 5)],
         direction="RIGHT",
@@ -53,7 +54,7 @@ def test_duel_states_independent():
         grid_height=20,
     )
 
-    # CRUCIAL : On utilise deepcopy pour créer deux instances distinctes en mémoire
+    # CRUCIAL : Utilisation du deepcopy pour créer deux instances distinctes en mémoire
     state_astar = copy.deepcopy(state)
     state_rl = copy.deepcopy(state)
 
@@ -64,7 +65,7 @@ def test_duel_states_independent():
         rl_agent=RLAgent(),
     )
 
-    # On modifie uniquement le serpent A*
+    # Modifier uniquement le serpent A*
     dm.state_astar.snake.append((99, 99))
 
     # Maintenant, l'assertion va passer car state_rl a sa propre liste snake

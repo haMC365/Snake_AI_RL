@@ -6,7 +6,7 @@ from tensorboardX import SummaryWriter
 def run_simulation():
     # On crée un dossier spécifique pour ce test
     writer = SummaryWriter("logs/test_session")
-    print("🚀 Simulation d'entraînement en cours... Regarde ton navigateur !")
+    print("Simulation d'entraînement en cours... Regarde ton navigateur !")
 
     epsilon = 1.0
     avg_reward = 0
@@ -26,7 +26,7 @@ def run_simulation():
         time.sleep(0.15)  # Pour simuler le temps de calcul
 
     writer.close()
-    print("✅ Simulation terminée. Rafraîchis http://localhost:6006")
+    print("Simulation terminée. Rafraîchis http://localhost:6006")
 
 
 if __name__ == "__main__":

@@ -19,7 +19,6 @@ def setup_duel():
         grid_height=grid_size,
     )
 
-    # --- CORRECTION : Utilisation de copy.deepcopy pour l'indépendance réelle ---
     engine_astar = SnakeEngine(copy.deepcopy(state))
     engine_rl = SnakeEngine(copy.deepcopy(state))
 
@@ -40,11 +39,11 @@ def test_multithread_step_runs(setup_duel):
 def test_states_independence(setup_duel):
     duel = setup_duel
 
-    # On modifie la nourriture de l'un
+    # Modifier la nourriture de l'un
     duel.state_astar.food = (1, 1)
     duel.state_rl.food = (19, 19)  # (9,9) était trop proche du bord
 
-    # On vérifie AVANT le step que les IDs sont différents
+    # Verifier AVANT le step que les IDs sont différents
     assert id(duel.state_astar) != id(duel.state_rl)
 
     duel.step()
@@ -55,13 +54,14 @@ def test_states_independence(setup_duel):
 
 
 def test_multiple_consecutive_steps(setup_duel):
+    """Fonction pour tester les test multiples steps"""
     duel = setup_duel
     num_steps = 5  # On réduit à 5 pour être sûr de ne pas toucher de mur
 
     for _ in range(num_steps):
         duel.step()
 
-    # On vérifie que les deux ont avancé du même nombre de pas
+    # Verifier que les deux ont avancé du même nombre de pas
     assert duel.state_astar.steps == num_steps
     assert duel.state_rl.steps == num_steps
     assert duel.state_astar.alive is True

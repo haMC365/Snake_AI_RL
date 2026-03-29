@@ -1,0 +1,24 @@
+@startuml
+
+package "snake_ai.utils" {
+
+    class PersistenceManager {
+        +data_dir: Path
+        +file_format: string
+
+        +save_q_table(data: dict)
+        +load_q_table() : dict
+        +migrate_format()
+    }
+
+    class MetricsLogger {
+        -writer: SummaryWriter
+        +log_dir: Path
+
+        +log_metrics(step, reward, loss)
+        +log_hparams(params)
+        +close()
+    }
+}
+
+@enduml

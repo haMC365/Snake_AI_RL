@@ -1,0 +1,26 @@
+@startuml
+
+package "snake_ai.ui" {
+
+    class Renderer {
+        +width: int
+        +height: int
+        +grid_size: int
+        -screen: pygame.Surface
+        -fonts: dict
+
+        +__init__()
+        +draw_state(state)
+        +display_message()
+        +update_display()
+    }
+
+    class ChartsRenderer {
+        +theme: dict
+
+        +draw_score_history(scores: list)
+        +draw_duel_comparison(stats: dict)
+    }
+}
+
+@enduml

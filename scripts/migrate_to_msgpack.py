@@ -16,9 +16,9 @@ def migrate():
         with open(msgpack_path, "wb") as f:
             f.write(msgpack.packb(data))
 
-        print(f"✅ Migration réussie : {json_path} -> {msgpack_path}")
+        print(f"Migration réussie : {json_path} -> {msgpack_path}")
     else:
-        print("❌ Erreur : Le fichier data/q_table.json est introuvable.")
+        print("Erreur : Le fichier data/q_table.json est introuvable.")
 
 
 if __name__ == "__main__":

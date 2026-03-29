@@ -24,7 +24,7 @@ class SnakeRenderer:
 
     def draw_metrics(self, screen, metrics, x, y, color=(200, 200, 200)):
         """Affiche le bloc de metrics pour l'agent donné."""
-        # On multiplie par 1000 pour afficher en millisecondes (ms)
+        # Multiplication par 1000 pour afficher en millisecondes (ms)
         lines = [
             f"Score: {metrics.get('score', 0)}",
             f"Steps: {metrics.get('steps', 0)}",
@@ -91,9 +91,9 @@ class SnakeRenderer:
         block = settings.block_size
         grid_pixel_w = state_a.grid_width * block
         y_grid = 50
-        y_metrics = (
-            y_grid + grid_pixel_w + 20
-        )  # Positionner les metriques sous la grille
+
+        # Positionner les metriques sous la grille
+        y_metrics = y_grid + grid_pixel_w + 20
 
         # 1. Dessiner la partie Agents A* (Gauche)
         x_a = 20
@@ -106,11 +106,6 @@ class SnakeRenderer:
             self.draw_metrics(
                 self.display, metrics["astar"], x_a, y_metrics, color=(0, 200, 255)
             )
-        # score_a = self.small_font.render(
-        #     f"Score: {state_a.score} | Pas: {state_a.steps}", True, (200, 200, 200)
-        # )
-        # self.display.blit(label_a, [20, 10])
-        # self.display.blit(score_a, [20, grid_pixel_w + 45])
 
         # 2. Dessiner l'agent RL (Droite)
         x_rl = grid_pixel_w + 60  # un peu plus d'espace entre les deux
@@ -130,9 +125,11 @@ class SnakeRenderer:
         self.clock.tick(settings.speed)
 
     def close(self):
+        """Close Pygame"""
         pygame.quit()
 
     def display_game_over(self, score):
+        """Fonction pour montrer al fenetre OVER"""
         font = pygame.font.SysFont("Arial", 64, bold=True)
         text = font.render("GAME OVER", True, (255, 0, 0))
         rect = text.get_rect(center=(self.width // 2, self.height // 2))

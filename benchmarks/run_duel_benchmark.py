@@ -25,7 +25,7 @@ def set_seeds(seed=42):
 # Étape 3 — Fonction create_initial_state (Sans UI)
 def create_initial_state(grid_size: int) -> GameState:
     center_y = grid_size // 2
-    # On place le serpent au centre gauche pour laisser de l'espace
+    # Placer le serpent au centre gauche pour laisser de l'espace
     snake = [(5, center_y), (4, center_y), (3, center_y)]
 
     # Position de la nourriture fixe pour le premier pas (sera randomisée par le moteur ensuite)
@@ -62,8 +62,8 @@ def run_single_duel(astar_agent, rl_agent, grid_size: int) -> dict:
     # sans manger, on considère qu'il tourne en rond.
     limit = grid_size * grid_size
 
-    while engine_astar.state.alive or engine_rl.state.alive:
-        # Sauvegarde des scores AVANT le mouvement
+    while engine_astar.state.alive and engine_rl.state.alive:
+        # Sauvegarder des scores AVANT le mouvement
         old_score_astar = engine_astar.state.score
         old_score_rl = engine_rl.state.score
 
@@ -76,7 +76,7 @@ def run_single_duel(astar_agent, rl_agent, grid_size: int) -> dict:
             last_score_step_rl = engine_rl.state.steps
 
         # SÉCURITÉ ANTI-BOUCLE
-        # On vérifie : "Pas actuel - Pas au moment de la dernière pomme > Limite"
+        # Verifier >>> "Pas actuel - Pas au moment de la dernière pomme > Limite"
         if engine_astar.state.alive:
             if (engine_astar.state.steps - last_score_step_astar) > limit:
                 engine_astar.state.alive = False
@@ -85,7 +85,7 @@ def run_single_duel(astar_agent, rl_agent, grid_size: int) -> dict:
             if (engine_rl.state.steps - last_score_step_rl) > limit:
                 engine_rl.state.alive = False
 
-    # --- CRUCIAL : Le dictionnaire de retour ---
+    # --- CRUCIAL: Le dictionnaire de retour ---
     metrics = {
         "astar_score": engine_astar.state.score,
         "astar_steps": engine_astar.state.steps,
@@ -95,16 +95,15 @@ def run_single_duel(astar_agent, rl_agent, grid_size: int) -> dict:
     }
 
     duel.shutdown()
-    return metrics  # Indenté au même niveau que le début du 'while'
+    return metrics
 
 
 # Étape 6 — Statistiques
 def compute_summary(results: list) -> dict:
-    # On filtre les éventuels None pour ne garder que les dict valides
     valid_results = [r for r in results if r is not None]
 
     if not valid_results:
-        print("❌ Erreur : Aucun résultat valide pour le résumé.")
+        print("ERREUR -> Aucun résultat valide pour le résumé.")
         return {}
 
     summary = {}
@@ -190,15 +189,13 @@ def plot_benchmark_results(results: list):
     plt.tight_layout()
     chart_path = "benchmarks/comparison_chart.png"
     plt.savefig(chart_path)
-    print(f"📈 Graphique sauvegardé : {chart_path}")
+    print(f"Graphique sauvegardé : {chart_path}")
     plt.show()
 
 
 # Étape 5 & 8 — Point d’entrée
 def run_benchmark(n_games: int, grid_size: int):
-    print(
-        f"🧪 Lancement du Benchmark : {n_games} duels | Grille {grid_size}x{grid_size}"
-    )
+    print(f"Lancement du Benchmark : {n_games} duels | Grille {grid_size}x{grid_size}")
     set_seeds(42)
 
     astar_agent = AStarAgent()
@@ -206,11 +203,11 @@ def run_benchmark(n_games: int, grid_size: int):
 
     model_path = "data/q_table.msgpack"
     if os.path.exists(model_path):
-        rl_agent.load(model_path)  # Assure-toi que cette méthode existe dans RLAgent
-        print(f"📖 Modèle RL chargé avec succès ({model_path})")
+        rl_agent.load(model_path)
+        print(f"Modèle RL chargé avec succès ({model_path})")
     else:
         print(
-            "⚠️ ATTENTION : Aucun modèle trouvé à data/q_table.msgpack. Le RL joue au hasard !"
+            "ATTENTION : Aucun modèle trouvé à data/q_table.msgpack. Le RL joue au hasard !"
         )
 
     results = []
@@ -220,7 +217,7 @@ def run_benchmark(n_games: int, grid_size: int):
         metrics = run_single_duel(astar_agent, rl_agent, grid_size)
         results.append(metrics)
         if (i + 1) % 5 == 0:
-            print(f"  🏁 Duel {i + 1}/{n_games} terminé...")
+            print(f"Duel {i + 1}/{n_games} terminé...")
 
     total_time = time.time() - start_bench
     summary = compute_summary(results)
@@ -229,7 +226,7 @@ def run_benchmark(n_games: int, grid_size: int):
     export_csv(results, "benchmarks/results.csv")
 
     print("\n" + "=" * 40)
-    print(f"📊 RÉSULTATS GLOBAUX ({total_time:.1f}s)")
+    print(f"RÉSULTATS GLOBAUX ({total_time:.1f}s)")
     print("=" * 40)
     print(
         f"A* Score Moyen : {summary['astar_score_mean']:.2f} (±{summary['astar_score_std']:.2f})"
@@ -246,5 +243,4 @@ def run_benchmark(n_games: int, grid_size: int):
 
 
 if __name__ == "__main__":
-    # On commence par 50 parties pour avoir des stats fiables sans attendre trop longtemps
     run_benchmark(n_games=50, grid_size=20)

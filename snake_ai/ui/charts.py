@@ -1,5 +1,5 @@
 """
-Ce module contient
+Ce module contient la logique pour les charts
 """
 
 from typing import Any
@@ -53,30 +53,30 @@ class LivePerformanceCharts:
         self.ax_score.legend(loc="upper left")
 
     def update_data(self, episode, astar_metrics, rl_metrics):
-        # On enregistre l'épisode actuel
+        # Enregistrement l'épisode actuel
         self.episodes.append(episode)
 
         # --- TRAITEMENT DUEL A* (Cyan) ---
         self.astar_data["score"].append(astar_metrics["score"])
 
-        # AJOUT : Condition critique pour la survie
+        # Condition critique pour la survie
         if astar_metrics["alive"]:
             self.astar_data["efficiency"].append(astar_metrics.get("efficiency", 1.0))
             self.astar_data["time"].append(astar_metrics["avg_latency"] * 1000)
         else:
-            # On utilise None pour que Matplotlib ARRETE de tracer la ligne
+            # Utilisation du None pour que Matplotlib ARRETE de tracer la ligne
             self.astar_data["efficiency"].append(None)
             self.astar_data["time"].append(None)
 
         # --- TRAITEMENT DUEL RL (Orange) ---
         self.rl_data["score"].append(rl_metrics["score"])
 
-        # AJOUT : Condition critique pour la survie
+        # Contition critique pour la survie
         if rl_metrics["alive"]:
             self.rl_data["efficiency"].append(rl_metrics.get("efficiency", 1.0))
             self.rl_data["time"].append(rl_metrics["avg_latency"] * 1000)
         else:
-            # On utilise None pour "casser" la ligne orange ici
+            # Utilisation du None pour "casser" la ligne orange ici
             self.rl_data["efficiency"].append(None)
             self.rl_data["time"].append(None)
 
@@ -91,7 +91,7 @@ class LivePerformanceCharts:
         self.line_time_astar.set_data(self.episodes, self.astar_data["time"])
         self.line_time_rl.set_data(self.episodes, self.rl_data["time"])
 
-        # Ajustement des axes (Inchangé)
+        # Ajustement des axes
         for ax in [self.ax_score, self.ax_eff, self.ax_time]:
             ax.relim()
             ax.autoscale_view()

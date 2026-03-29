@@ -1,0 +1,46 @@
+@startuml
+package "snake_ai.engine" {
+
+  enum Direction {
+    UP
+    DOWN
+    LEFT
+    RIGHT
+  }
+
+  class SnakeEngine {
+    - width: int
+    - height: int
+    - score: int
+    - is_game_over: bool
+
+    + step(action: Direction)
+    + reset()
+    + get_state()
+    - _check_collisions()
+  }
+
+  class Snake {
+    - body: List<Tuple>
+    - direction: Direction
+    + head: Tuple
+
+    + move(new_dir: Direction)
+    + grow()
+    + check_self_collision()
+  }
+
+  class Food {
+    - position: Tuple
+
+    + spawn(forbidden_slots: List)
+  }
+
+  ' Relations
+  SnakeEngine *-- "1" Snake : composition
+  SnakeEngine *-- "1" Food : composition
+
+  Snake --> Direction : uses
+}
+
+@enduml

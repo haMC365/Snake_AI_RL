@@ -1,21 +1,23 @@
-import pygame
+"""Module Principal"""
+
+from typing import Any
+
 import sys
 import copy
+import pygame
+
 from snake_ai.core.game_state import GameState
 from snake_ai.engine.game import SnakeEngine
 from snake_ai.ui.renderer import SnakeRenderer
+from snake_ai.ui.charts import LivePerformanceCharts
 from snake_ai.simulation.duel_manager import DuelManager
 from snake_ai.simulation.mode_manager import ModeManager, GameMode
 from snake_ai.config.settings import settings
-
-from snake_ai.ui.charts import LivePerformanceCharts
-
-# --- NOUVEAUX IMPORTS DES AGENTS ---
 from snake_ai.agents.astar.astar_agent import AStarAgent
 from snake_ai.agents.rl.rl_agent import RLAgent
 
 
-def get_manual_action(key):
+def get_manual_action(key: Any):
     """Traduit les touches du clavier en directions pour le moteur."""
     if key in [pygame.K_UP, pygame.K_w]:
         return "UP"
@@ -29,6 +31,7 @@ def get_manual_action(key):
 
 
 def main():
+    """Fonctionnement principal"""
     # 1. Initialisation de l'état initial
     grid_size = 20
     initial_state = GameState(
@@ -46,7 +49,6 @@ def main():
     engine = SnakeEngine(initial_state)
 
     # --- PRÉPARATION DU MODE DUEL ---
-    # On crée deux copies de l'état pour que chaque IA ait sa propre grille
     state_astar = copy.deepcopy(initial_state)
     state_rl = copy.deepcopy(initial_state)
 
@@ -77,8 +79,8 @@ def main():
     clock = pygame.time.Clock()
     running = True
 
-    print("🎮 Mode MANUEL activé. Utilisez les flèches pour jouer.")
-    print("🚀 Appuyez sur 'D' pour lancer le DUEL : A* (Gauche) vs RL (Droite)")
+    print("Mode MANUEL activé. Utilisez les flèches pour jouer.")
+    print("Appuyez sur 'D' pour lancer le DUEL : A* (Gauche) vs RL (Droite)")
 
     charts = None
     current_episode = 0
@@ -105,11 +107,12 @@ def main():
 
             # 4. Logique de mise à jour selon le Mode
             if mode_manager.mode == GameMode.MANUAL:
+
                 # Mouvement automatique continu
                 alive = engine.step(engine.state.direction)
 
                 if not alive:
-                    print(f"💀 Game Over! Score final: {engine.state.score}")
+                    print(f"Game Over! Score final: {engine.state.score}")
                     # Affichage via le moteur (si implémenté) ou simple pause
                     renderer.render(engine.get_state())
                     pygame.time.wait(2000)
@@ -122,7 +125,7 @@ def main():
 
                 # 1. Initialisation de la fenêtre de graphiques au premier pas du duel
                 if charts is None:
-                    print("📊 Ouverture des graphiques de performance...")
+                    print("Ouverture des graphiques de performance...")
                     charts = LivePerformanceCharts()  # On crée l'instance ici
 
                 # 2. Récupération des métriques
@@ -140,11 +143,7 @@ def main():
                     or not duel_manager.state_rl.alive
                 ):
                     current_episode += 1
-                    # Utilise update_data si c'est le nom dans ton fichier charts.py
                     charts.update_data(current_episode, metrics["astar"], metrics["rl"])
-
-                    # Optionnel : On peut reset les moteurs ici pour relancer un épisode
-                    # ou laisser le duel s'arrêter.
 
                 # 4. Rendu Pygame
                 renderer.render_duel(
@@ -155,11 +154,10 @@ def main():
             pygame.display.flip()
 
     except Exception as e:
-        print(f"❌ Erreur critique : {e}")
+        print(f"Erreur critique : {e}")
 
     finally:
-        # Nettoyage propre des threads et de Pygame
-        print("🔌 Fermeture du jeu...")
+        print("Fermeture du jeu...")
         duel_manager.shutdown()
         pygame.quit()
         sys.exit()
