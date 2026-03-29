@@ -1,0 +1,25 @@
+@startuml
+
+package "snake_ai.simulation" {
+
+    class DuelManager {
+        -engine_astar
+        -engine_rl
+        -executor: ThreadPoolExecutor
+        +results: dict
+
+        +run_duel()
+        +step_parallel()
+        -_update_stats()
+    }
+
+    class ModeManager {
+        +current_mode: string
+        +is_visual: bool
+
+        +setup_mode()
+        +switch_mode(new_mode: string)
+    }
+}
+
+@enduml

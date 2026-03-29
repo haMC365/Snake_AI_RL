@@ -18,7 +18,7 @@ class AStarAgent:
         # 1. Tenter de trouver le chemin vers la nourriture
         path = self._astar(start, goal, obstacles, state.grid_width, state.grid_height)
 
-        # 2. Validation du chemin : est-ce que je peux survivre APRES avoir mangé ?
+        # 2. Validation du chemin
         if path and len(path) > 1:
             if self._is_path_safe(state, path):
                 return self._get_direction_from_coords(start, path[1])
@@ -89,7 +89,7 @@ class AStarAgent:
         Vérifie si le chemin vers la nourriture ne mène pas à une impasse.
         On simule virtuellement la position du serpent à la fin du chemin.
         """
-        # Simulation simplifiée : est-ce que la tête à la nourriture peut encore atteindre la queue ?
+        # Simulation simplifiée, verifier que la tête à la nourriture peut encore atteindre la queue
         simulated_head = path[-1]
         # Après avoir mangé, le corps est le chemin parcouru + l'ancien corps (moins la queue qui bouge)
         # Pour rester simple : on vérifie si la nouvelle tête n'est pas totalement entourée

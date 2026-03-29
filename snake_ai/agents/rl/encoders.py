@@ -1,3 +1,5 @@
+"""Module pour encoder dans le Q-Table"""
+
 from typing import Tuple
 from snake_ai.core.game_state import GameState
 
@@ -9,12 +11,15 @@ class StateEncoder:
     """
 
     def encode(self, state: GameState) -> Tuple[int, ...]:
+        """Fonction pour encoder les données"""
         head = state.head()
         food = state.food
 
-        # 1. Directions (Boléens)
-        d_l, d_r = state.direction == "LEFT", state.direction == "RIGHT"
-        d_u, d_d = state.direction == "UP", state.direction == "DOWN"
+        # 1. DIRECTIONS (Booleans)
+        d_l = state.direction == "LEFT"
+        d_r = state.direction == "RIGHT"
+        d_u = state.direction == "UP"
+        d_d = state.direction == "DOWN"
 
         # 2. Points de vue (Radar)
         # On regarde à 1 case (Danger immédiat) et 2 cases (Danger proche)
@@ -44,13 +49,13 @@ class StateEncoder:
             food[1] < head[1],  # Food Up
             food[1] > head[1],  # Food Down
             # --- 4. ANALYSE SPATIALE (4 bits) ---
-            # Le serpent est-il aligné horizontalement avec la pomme ?
+            # Verifie si le serpent est-il aligné horizontalement avec la pomme
             food[0] == head[0],
-            # Le serpent est-il aligné verticalement avec la pomme ?
+            # Verifie si le serpent est-il aligné verticalement avec la pomme ?
             food[1] == head[1],
             # Proximité immédiate (12ème bit original)
             (abs(head[0] - food[0]) + abs(head[1] - food[1])) == 1,
-            # Le corps est-il long ? (Change la stratégie de virage)
+            # Verifie si le corps est long ? (alors change la stratégie de virage)
             len(state.snake) > 10,
         ]
 

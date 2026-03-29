@@ -21,10 +21,10 @@ def test_astar_no_solution():
     goal = Point(100, 100)
     obstacles = [Point(20, 0), Point(0, 20)]
 
-    # On fait semblant d'appeler l'algo
+    # Faire semblants d'appeler l'algo
     path = None
 
-    # On utilise les variables dans des asserts pour valider le test
+    # Utilisation des les variables dans des asserts pour valider le test
     assert start != goal
     assert len(obstacles) > 0
     assert path is None

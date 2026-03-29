@@ -35,6 +35,7 @@ class GameState:
     food: Tuple[int, int]
     grid_width: int
     grid_height: int
+
     # Valeurs par défaut pour simplifier l'instanciation
     score: int = 0
     steps: int = 0

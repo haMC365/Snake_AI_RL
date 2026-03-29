@@ -9,7 +9,7 @@ def test_config():
     print(f"Taille des blocs: {settings.block_size}")
 
     if settings.alpha == 0.1:
-        print("\n✅ Configuration chargée avec succès !")
+        print("\nConfiguration chargée avec succès !")
 
 
 if __name__ == "__main__":

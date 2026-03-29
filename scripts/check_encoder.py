@@ -24,7 +24,7 @@ def test():
     print(f"Taille du vecteur : {len(encoded_state)} bits")
 
     if len(encoded_state) == 11:
-        print("✅ Validation réussie : L'encodeur fonctionne avec GameState !")
+        print("Validation réussie : L'encodeur fonctionne avec GameState !")
 
 
 if __name__ == "__main__":

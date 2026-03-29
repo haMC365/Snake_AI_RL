@@ -110,7 +110,7 @@ class QTrainer:
         new_value = old_value + self.lr * (reward + self.gamma * next_max - old_value)
         self.q_table[state_key][action] = new_value
 
-        # On retourne l'erreur (Temporal Difference Error)
+        # Retourner l'erreur (Temporal Difference Error)
         return abs(new_value - old_value)
 
     def train(self, num_episodes: int = 10000, save_path: str = "data/q_table.msgpack"):
@@ -159,7 +159,7 @@ class QTrainer:
                     head_before[1] - current_state.food[1]
                 )
 
-                # 4. EXÉCUTER LE PAS (Une seule fois !)
+                # 4. EXÉCUTER LE PAS
                 alive = engine.step(next_dir)
 
                 # 5. Calcul de la récompense

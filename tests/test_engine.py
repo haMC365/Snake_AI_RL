@@ -28,8 +28,7 @@ def test_continuous_movement_logic():
 
 
 def test_game_over_detection():
-    # Setup : Serpent contre le mur gauche, direction LEFT
-    # Setup : Serpent au bord, prêt à sortir
+    """Fonction pour forcer un game over detection"""
     state = GameState(
         snake=[(0, 5)],
         direction="LEFT",

@@ -52,11 +52,9 @@ class SnakeEngine:
 
         while self.running:
             # --- 1. CADENCE ---
-            # Cette ligne gère la vitesse. Si tu l'enlèves, le serpent est trop rapide.
             clock.tick(self.fps)
 
             # --- 2. ENTRÉES CLAVIER ---
-            # On ne fait QUE changer la variable de direction ici
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -71,8 +69,7 @@ class SnakeEngine:
                         self._update_direction("RIGHT")
 
             # --- 3. MOUVEMENT AUTOMATIQUE (L'élément manquant) ---
-            # On appelle step() avec la direction actuelle stockée dans l'état.
-            # Cela arrive à chaque tour de boucle, même si tu ne touches pas au clavier.
+            # Appelle step() avec la direction actuelle stockée dans l'état.
             alive = self.step(self.state.direction)
 
             # --- 4. VÉRIFICATION COLLISION ---
@@ -82,11 +79,10 @@ class SnakeEngine:
                 continue  # On sort de la boucle
 
             # --- 5. AFFICHAGE ---
-            # TRÈS IMPORTANT : Redessiner l'écran à chaque mouvement
+            #  Redessiner l'écran à chaque mouvement
             if hasattr(self, "renderer"):
                 self.renderer.render(self.state)
             else:
-                # Si tu n'as pas de renderer séparé, appelle ta fonction de dessin ici
                 self._draw_everything()
 
             pygame.display.flip()  # Rafraîchit l'écran Pygame

@@ -1,0 +1,43 @@
+@startuml
+
+package "snake_ai.agents" {
+    
+    abstract class BaseAgent {
+        +select_action(game: SnakeEngine) : Direction
+    }
+
+    class QTableAgent {
+        +q_table: Dict
+        +epsilon: float
+        -_get_state_11bit(game: SnakeEngine) : Tuple
+        +update_q_value(state, action, reward, next_state)
+    }
+
+    class AStarAgent {
+        +select_action(game: SnakeEngine) : Direction
+        -_heuristic(pos_a: Tuple, pos_b: Tuple) : int
+    }
+
+    class RLTrainer {
+        +total_episodes: int
+        +train()
+        +save_checkpoint()
+    }
+}
+
+enum Direction {
+    UP
+    DOWN
+    LEFT
+    RIGHT
+}
+
+' Relations
+BaseAgent <|-- QTableAgent
+BaseAgent <|-- AStarAgent
+
+RLTrainer "1" --> "1" QTableAgent : trains
+
+BaseAgent ..> Direction
+
+@enduml
