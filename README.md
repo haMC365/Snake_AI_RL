@@ -4,37 +4,36 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Tests](https://img.shields.io/badge/tests-8/8%20passed-brightgreen.svg)
 
-Une plateforme de simulation de Snake haute performance conçue pour comparer l'intelligence humaine, les algorithmes de recherche de chemin classiques (**A***) et l'apprentissage par renforcement (**RL**).
+Une plateforme de simulation de Snake conçue pour comparer les algorithmes de recherche de chemin classiques (**A***) et l'apprentissage par renforcement (**RL**).
 
 ---
-### 📚 Documentation Approfondie
+### Documentation
 * [**Guide d'Installation détaillé (WSL)**](docs/installation.md)
 * [**Architecture & Schéma de données**](docs/architecture.md)
 * [**Guide des Opérations (Entraînement & Tests)**](docs/operations.md)
 ---
 
-### 📖 Documentation de Soutenance
-Retrouvez l'intégralité de la documentation académique :
+### Documentation de Soutenance
 * Le **Cahier des Charges** (Objectifs et contraintes).
 * Le **Rapport de Conception** (Architecture UML, choix techniques).
 * Le **Rapport Final** (Analyse des benchmarks et conclusion).
 
-👉 [Consulter les rapports complets ici](docs/references.md#documents-de-projet-officiels)
+[Consulter les rapports complets ici](docs/references.md#documents-de-projet-officiels)
 
 ---
 
 
-## ✨ Fonctionnalités (Features)
+## Fonctionnalités
 
 Le projet **Snake AI** offre un environnement complet pour le développement et la comparaison d'algorithmes :
 
-* **🕹️ Mode Manuel** : Jouez au serpent de manière classique avec les touches directionnelles ou ZQSD pour établir des scores de référence humains.
-* **⚔️ Mode Duel Dynamique** : Basculez instantanément d'une partie humaine à une compétition d'IA en pressant une seule touche (`D`).
-* **💾 Capture d'État (Snapshot)** : Système de clonage profond (`Deep Copy`) de l'état du jeu, garantissant que les deux IA démarrent avec une configuration identique (position, longueur, score).
-* **🖥️ Affichage Split-Screen** : Visualisation en temps réel de deux moteurs de jeu côte à côte pour comparer visuellement les stratégies de l'A* et du RL.
-* **🧠 Perception IA 11-bits** : Encodeur d'état optimisé permettant à l'agent de percevoir les dangers immédiats, sa direction actuelle et l'angle vers la nourriture.
-* **🏗️ Architecture Découplée (MVC)** : Séparation stricte entre le **GameState** (données), le **SnakeEngine** (logique) et le **Renderer** (vue Pygame).
-* **✅ Qualité Industrielle** : Intégration continue (CI) avec validation automatique des tests unitaires, formatage du code via `Ruff` et gestion des dépendances via `uv`.
+* **Mode Manuel** : Jouez au serpent de manière classique avec les touches directionnelles ou ZQSD pour établir des scores de référence humains.
+* **Mode Duel Dynamique** : Basculez instantanément d'une partie humaine à une compétition d'IA en pressant une seule touche (`D`).
+* **Capture d'État (Snapshot)** : Système de clonage profond (`Deep Copy`) de l'état du jeu, garantissant que les deux IA démarrent avec une configuration identique (position, longueur, score).
+* **Affichage Split-Screen** : Visualisation en temps réel de deux moteurs de jeu côte à côte pour comparer visuellement les stratégies de l'A* et du RL.
+* **Perception IA 11-bits** : Encodeur d'état optimisé permettant à l'agent de percevoir les dangers immédiats, sa direction actuelle et l'angle vers la nourriture.
+* **Architecture Découplée (MVC)** : Séparation stricte entre le **GameState** (données), le **SnakeEngine** (logique) et le **Renderer** (vue Pygame).
+* **Qualité Industrielle** : Intégration continue (CI) avec validation automatique des tests unitaires, formatage du code via `Ruff` et gestion des dépendances via `uv`.
 ---
 
 ### Démonstration et Performance
@@ -42,25 +41,23 @@ Le mode Duel permet de visualiser les strategies divergentes:
 * **A***: *Recherche de chemin déterministe (optimalité à court terme)*.
 * **RL (Q-Learning)**: Comportement appris par expérience (gestion de l'espace).
 
-![Comparaison A* vs RL](docs/architecture/img/duel_screenshot.png)
-
 ### Analyse des Performances
 Les résultats des simulations sont compilés automatiquement dans un graphique de benchmarking:
 ![Graphique de Performance](benchmarks/comparison_chart.png)
 
 
-## 📐 Conception Logicielle (UML)
+## Conception Logicielle (UML)
 Le projet suit une architecture découplée pour isoler la logique de jeu de l'intelligence Articificielle.
 
-![Diagramme de Classes UML](docs/architecture/img/class_diagram.png)
+![Diagramme de Classes UML](ressources/diagrams/final-version/images/package-diagram_general.png)
 
-**Concepts clés appliqués :**
+**Concepts clés :**
 * **Singleton/Configuration**: Gestion centralisée via `settings.py`
 * **Deep Copying** : Clonage d'état pour garantir l'équite du Duel.
 * **Abstraction d'Agent** : Interface commune pour A* et le Q-Learning.
 
 
-## 🏗️ Structure du Projet
+## Structure du Projet
 
 L'architecture est organisée selon le principe de **séparation des préoccupations** (SOC), garantissant que la logique de l'IA est totalement indépendante de l'affichage graphique.
 
@@ -82,7 +79,7 @@ Snake_AI_RL/
 └── uv.lock               # Verrouillage exact des versions Python
 ```
 
-## 3. 🛠️ Prérequis Système (WSL / Linux)
+## 3. Prérequis Système (WSL / Linux)
 
 Pour compiler et exécuter le projet avec le rendu graphique **Pygame**, vous devez installer les dépendances système liées à la gestion des médias, des polices et de la compilation Python.
 
@@ -111,7 +108,7 @@ sudo apt-get install -y python3-dev build-essential curl git
 > - Windows 10 : Si vous n'avez pas de serveur graphique configuré, vous devrez utiliser un serveur X (comme VcXsrv) ou exécuter les scripts en mode "headless" `(export SDL_VIDEODRIVER=dummy)`
 
 
-## 4. 🚀 Installation Rapide
+## 4. Installation Rapide
 
 Nous utilisons **`uv`**, un gestionnaire de paquets Python ultra-rapide, pour garantir que tout le monde utilise exactement les mêmes versions de bibliothèques.
 
@@ -148,7 +145,7 @@ uv --version
 > Contrairement à pip install, cette commande supprime les paquets inutiles et s'assure que votre dossier .venv est une copie conforme de l'environnement de développement officiel.
 
 
-## 5. 🧪 Compiler et Valider (Qualité du Code)
+## 5. Compiler et Valider (Qualité du Code)
 
 Avant de soumettre vos modifications ou de lancer la simulation, assurez-vous que votre environnement respecte les standards de qualité du projet.
 
@@ -179,7 +176,7 @@ uv run ruff check . --fix
 > [!NOTE]
 > Pipeline CI/CD : Chaque push sur GitHub déclenche automatiquement ces vérifications. Si pytest ou ruff échouent en local, votre Pull Request sera bloquée sur GitHub.
 
-## 6. 🎮 Exécution et Commandes
+## 6. Exécution et Commandes
 
 Une fois l'installation validée, vous pouvez lancer les différents modules du projet via le point d'entrée principal.
 
@@ -214,7 +211,7 @@ uv run scripts/check_encoder.py
 > [!TIP]
 > Performance : Si vous trouvez que le serpent est trop lent ou trop rapide en mode manuel, vous pouvez ajuster les FPS dans la configuration du moteur de jeu.
 
-## 8. 🧠 Architecture de l'IA (Encodeur)
+## 8. Architecture de l'IA (Encodeur)
 
 Pour permettre à l'agent de **Reinforcement Learning (RL)** d'apprendre efficacement, nous utilisons un espace d'observation réduit à **11 dimensions**. Plutôt que de lui donner les pixels de l'écran, nous lui transmettons un vecteur binaire.
 
@@ -257,7 +254,7 @@ Vous pouvez visualiser cet encodage en temps réel avec le script dédié :
 uv run scripts/check_encoder.py
 ```
 
-## 9. 🤝 Contribution
+## 9. Contribution
 
 Les contributions sont les bienvenues ! Pour maintenir la qualité du projet, merci de suivre cette procédure :
 
@@ -268,7 +265,7 @@ Les contributions sont les bienvenues ! Pour maintenir la qualité du projet, me
 
 ---
 
-## 10. 📄 Licence
+## 10. Licence
 
 Ce projet est sous licence **MIT**. Cela signifie que vous pouvez librement copier, modifier et distribuer le code, à condition de conserver la mention du copyright original.
 

@@ -46,7 +46,7 @@ Une fois le dépot cloné et les dépendances système installées:
     ```bash
     uv sync
     ```
-    *Cette commande crée unvironement virtuel (`.venv`) et installe automatiquement toutes les dépendances (Pygame, Numpy, Msgpack, etc)* 
+    *Cette commande crée un environement virtuel (`.venv`) et installe automatiquement toutes les dépendances (Pygame, Numpy, Msgpack, etc)* 
 
 ## 4. Vérification de l'installation
 Pour vérifier que l'environnement est opérationnel, lancer la suite de tests:
